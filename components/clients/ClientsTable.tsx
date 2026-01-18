@@ -1,8 +1,23 @@
+/**
+ * ClientsTable Component
+ * 
+ * Main table component for displaying clients with filtering capabilities.
+ * Uses nuqs for URL-persisted filter state (shareable, survives refresh).
+ * 
+ * Features:
+ * - Search by name, contact name, or email
+ * - Filter by status (active, inactive)
+ * - Results count display
+ */
+
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
-import { Building2, Anchor, Search } from 'lucide-react'
+import { Building2, Anchor } from 'lucide-react'
+import { useTableFilters, useFilterKeyboardShortcuts } from '@/lib/hooks/useSearchFilters'
+import SearchInput from '@/components/ui/SearchInput'
+import FilterPills, { entityStatusOptions } from '@/components/ui/FilterPills'
 
 interface ClientWithCount {
   id: string
@@ -20,52 +35,71 @@ interface ClientsTableProps {
 }
 
 export default function ClientsTable({ clients }: ClientsTableProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string | null>(null)
-
+  // Use URL-persisted filter state
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    status,
+    toggleStatus,
+    clearAll,
+    hasFilters,
+    activeFilterCount,
+  } = useTableFilters({ enableTypeFilter: false, enableDateFilter: false })
+  
+  // Register keyboard shortcut (Escape to clear)
+  useFilterKeyboardShortcuts(clearAll)
+  
+  // Filter clients based on current filters
   const filteredClients = useMemo(() => {
     return clients.filter((client) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
+      // Search filter (debounced)
+      if (debouncedSearch) {
+        const query = debouncedSearch.toLowerCase()
         const matchesName = client.name.toLowerCase().includes(query)
         const matchesContact = client.contact_name?.toLowerCase().includes(query) || false
         const matchesEmail = client.contact_email?.toLowerCase().includes(query) || false
         if (!matchesName && !matchesContact && !matchesEmail) return false
       }
-
+      
       // Status filter
-      if (statusFilter && client.status !== statusFilter) return false
-
+      if (status && client.status !== status) return false
+      
       return true
     })
-  }, [clients, searchQuery, statusFilter])
-
+  }, [clients, debouncedSearch, status])
+  
   return (
     <div>
       {/* Filters */}
-      <div className="mb-4 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search clients..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+      <div className="space-y-4 mb-6">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search clients..."
+          shortcutHint="/"
+        />
+        
+        <div className="flex flex-wrap items-center gap-4">
+          <FilterPills
+            label="Status"
+            options={entityStatusOptions}
+            value={status}
+            onChange={toggleStatus}
           />
+          
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
-        <select
-          value={statusFilter || ''}
-          onChange={(e) => setStatusFilter(e.target.value || null)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
       </div>
-
+      
+      {/* Empty state */}
       {filteredClients.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
           <Building2 className="mx-auto h-12 w-12 text-gray-400" />
@@ -75,6 +109,14 @@ export default function ClientsTable({ clients }: ClientsTableProps) {
               ? 'Get started by creating a new client.'
               : 'Try adjusting your search or filters.'}
           </p>
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -140,11 +182,16 @@ export default function ClientsTable({ clients }: ClientsTableProps) {
           </table>
         </div>
       )}
-
+      
       {/* Results count */}
-      {(searchQuery || statusFilter) && filteredClients.length > 0 && (
+      {hasFilters && filteredClients.length > 0 && (
         <p className="mt-2 text-sm text-gray-500">
           Showing {filteredClients.length} of {clients.length} clients
+          {activeFilterCount > 0 && (
+            <span className="ml-2 text-blue-600">
+              ({activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} applied)
+            </span>
+          )}
         </p>
       )}
     </div>

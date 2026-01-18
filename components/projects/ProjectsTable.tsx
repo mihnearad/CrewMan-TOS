@@ -1,9 +1,24 @@
+/**
+ * ProjectsTable Component
+ * 
+ * Main table component for displaying projects with filtering capabilities.
+ * Uses nuqs for URL-persisted filter state (shareable, survives refresh).
+ * 
+ * Features:
+ * - Search by name
+ * - Filter by status (active, planned, completed, cancelled)
+ * - Filter by type (vessel, windfarm, other)
+ * - Filter by date range (start_date within range)
+ * - Results count display
+ */
+
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { Wind, Anchor, Users, Boxes, Building2, UserCog } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, isWithinInterval, parseISO } from 'date-fns'
+import { useTableFilters, useFilterKeyboardShortcuts } from '@/lib/hooks/useSearchFilters'
 import ProjectsFilter from './ProjectsFilter'
 import QuickStatusBadge from './QuickStatusBadge'
 
@@ -25,41 +40,87 @@ interface ProjectsTableProps {
 }
 
 export default function ProjectsTable({ projects }: ProjectsTableProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string | null>(null)
-  const [typeFilter, setTypeFilter] = useState<string | null>(null)
-
+  // Use URL-persisted filter state
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    status,
+    toggleStatus,
+    type,
+    toggleType,
+    dateFrom,
+    dateTo,
+    setDateFrom,
+    setDateTo,
+    clearDateRange,
+    clearAll,
+    hasFilters,
+    activeFilterCount,
+  } = useTableFilters({ enableTypeFilter: true, enableDateFilter: true })
+  
+  // Register keyboard shortcut (Escape to clear)
+  useFilterKeyboardShortcuts(clearAll)
+  
+  // Filter projects based on current filters
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
+      // Search filter (debounced)
+      if (debouncedSearch) {
+        const query = debouncedSearch.toLowerCase()
         const matchesName = project.name.toLowerCase().includes(query)
         const matchesType = project.type.toLowerCase().includes(query)
-        if (!matchesName && !matchesType) return false
+        const matchesClient = project.client?.name.toLowerCase().includes(query)
+        if (!matchesName && !matchesType && !matchesClient) return false
       }
-
+      
       // Status filter
-      if (statusFilter && project.status !== statusFilter) return false
-
+      if (status && project.status !== status) return false
+      
       // Type filter
-      if (typeFilter && project.type !== typeFilter) return false
-
+      if (type && project.type !== type) return false
+      
+      // Date range filter (checks if project start_date is within range)
+      if (dateFrom || dateTo) {
+        if (!project.start_date) return false
+        const projectStart = parseISO(project.start_date)
+        
+        if (dateFrom && dateTo) {
+          if (!isWithinInterval(projectStart, { 
+            start: parseISO(dateFrom), 
+            end: parseISO(dateTo) 
+          })) return false
+        } else if (dateFrom) {
+          if (projectStart < parseISO(dateFrom)) return false
+        } else if (dateTo) {
+          if (projectStart > parseISO(dateTo)) return false
+        }
+      }
+      
       return true
     })
-  }, [projects, searchQuery, statusFilter, typeFilter])
-
+  }, [projects, debouncedSearch, status, type, dateFrom, dateTo])
+  
   return (
     <div>
+      {/* Filters */}
       <ProjectsFilter
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        typeFilter={typeFilter}
-        onTypeChange={setTypeFilter}
+        searchQuery={search}
+        onSearchChange={setSearch}
+        statusFilter={status}
+        onStatusChange={toggleStatus}
+        typeFilter={type}
+        onTypeChange={toggleType}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
+        onDateClear={clearDateRange}
+        showDateFilter
+        onClearAll={clearAll}
       />
-
+      
+      {/* Empty state */}
       {filteredProjects.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
           <Boxes className="mx-auto h-12 w-12 text-gray-400" />
@@ -69,6 +130,14 @@ export default function ProjectsTable({ projects }: ProjectsTableProps) {
               ? 'Get started by creating a new project.'
               : 'Try adjusting your search or filters.'}
           </p>
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -182,11 +251,16 @@ export default function ProjectsTable({ projects }: ProjectsTableProps) {
           </table>
         </div>
       )}
-
+      
       {/* Results count */}
-      {(searchQuery || statusFilter || typeFilter) && filteredProjects.length > 0 && (
+      {hasFilters && filteredProjects.length > 0 && (
         <p className="mt-2 text-sm text-gray-500">
           Showing {filteredProjects.length} of {projects.length} projects
+          {activeFilterCount > 0 && (
+            <span className="ml-2 text-blue-600">
+              ({activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} applied)
+            </span>
+          )}
         </p>
       )}
     </div>

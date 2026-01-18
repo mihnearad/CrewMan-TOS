@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { assignCrew, removeAssignment, updateAssignment } from '@/app/planning/actions'
 import { Plus, X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
@@ -20,6 +20,8 @@ import {
   parseISO
 } from 'date-fns'
 import { getAssignmentStatus, getStatusColorClasses } from '@/lib/utils'
+import { useMultiFilter, useDateRangeFilter, useSingleFilter } from '@/lib/hooks/useSearchFilters'
+import PlanningFilters from '@/components/planning/PlanningFilters'
 
 // Lazy load heavy GanttView component
 const GanttView = dynamic(() => import('@/components/planning/GanttView'), {
@@ -78,7 +80,74 @@ export default function PlanningBoard({
   const [loading, setLoading] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
+  // Filter state using nuqs for URL persistence
+  const { values: filterProjects, toggle: toggleProject, clear: clearProjects } = useMultiFilter('projects')
+  const { values: filterCrew, toggle: toggleCrew, clear: clearCrew } = useMultiFilter('crew')
+  const { from: filterDateFrom, to: filterDateTo, setFrom: setFilterDateFrom, setTo: setFilterDateTo, clear: clearDateRange } = useDateRangeFilter()
+  const { value: endingSoonFilter, toggle: toggleEndingSoon } = useSingleFilter('endingSoon')
+  const endingSoon = endingSoonFilter === 'true'
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    clearProjects()
+    clearCrew()
+    clearDateRange()
+    if (endingSoon) toggleEndingSoon('true')
+  }, [clearProjects, clearCrew, clearDateRange, endingSoon, toggleEndingSoon])
+
+  // Handle ending soon toggle
+  const handleEndingSoonToggle = useCallback(() => {
+    toggleEndingSoon('true')
+  }, [toggleEndingSoon])
+
   const activeProjects = initialProjects.filter(p => p.status === 'active')
+
+  // Filter assignments based on current filters
+  const filteredAssignments = useMemo(() => {
+    return initialAssignments.filter(assignment => {
+      // Project filter
+      if (filterProjects.length > 0 && !filterProjects.includes(assignment.project_id)) {
+        return false
+      }
+
+      // Crew filter
+      if (filterCrew.length > 0 && !filterCrew.includes(assignment.crew_member_id)) {
+        return false
+      }
+
+      // Date range filter
+      if (filterDateFrom || filterDateTo) {
+        const assignmentStart = parseISO(assignment.start_date)
+        const assignmentEnd = parseISO(assignment.end_date)
+        
+        if (filterDateFrom && filterDateTo) {
+          const filterStart = parseISO(filterDateFrom)
+          const filterEnd = parseISO(filterDateTo)
+          // Check if assignment overlaps with filter range
+          if (assignmentEnd < filterStart || assignmentStart > filterEnd) {
+            return false
+          }
+        } else if (filterDateFrom) {
+          if (assignmentEnd < parseISO(filterDateFrom)) return false
+        } else if (filterDateTo) {
+          if (assignmentStart > parseISO(filterDateTo)) return false
+        }
+      }
+
+      // Ending soon filter (within 7 days)
+      if (endingSoon) {
+        const status = getAssignmentStatus(assignment.end_date)
+        if (status !== 'ending-critical' && status !== 'ending-soon') {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [initialAssignments, filterProjects, filterCrew, filterDateFrom, filterDateTo, endingSoon])
+
+  // Check if any filters are active
+  const hasFilters = filterProjects.length > 0 || filterCrew.length > 0 || filterDateFrom || filterDateTo || endingSoon
 
   // Generate calendar days for the current month view
   const calendarDays = useMemo(() => {
@@ -96,14 +165,14 @@ export default function PlanningBoard({
     return days
   }, [currentMonth])
 
-  // Get assignments for a specific day
-  const getAssignmentsForDay = (day: Date) => {
-    return initialAssignments.filter(assignment => {
+  // Get assignments for a specific day (uses filtered assignments)
+  const getAssignmentsForDay = useCallback((day: Date) => {
+    return filteredAssignments.filter(assignment => {
       const start = parseISO(assignment.start_date)
       const end = parseISO(assignment.end_date)
       return isWithinInterval(day, { start, end }) || isSameDay(day, start) || isSameDay(day, end)
     })
-  }
+  }, [filteredAssignments])
 
   const handleAssign = async () => {
     if (!selectedProject || !selectedCrew || !startDate || !endDate) {
@@ -197,11 +266,36 @@ export default function PlanningBoard({
         </div>
       </div>
 
+      {/* Filters */}
+      <PlanningFilters
+        projects={initialProjects}
+        crewMembers={initialCrew}
+        selectedProjects={filterProjects}
+        onProjectToggle={toggleProject}
+        selectedCrew={filterCrew}
+        onCrewToggle={toggleCrew}
+        dateFrom={filterDateFrom}
+        dateTo={filterDateTo}
+        onDateFromChange={setFilterDateFrom}
+        onDateToChange={setFilterDateTo}
+        onDateClear={clearDateRange}
+        endingSoon={endingSoon}
+        onEndingSoonToggle={handleEndingSoonToggle}
+        onClearAll={clearAllFilters}
+      />
+
+      {/* Filter results summary */}
+      {hasFilters && (
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {filteredAssignments.length} of {initialAssignments.length} assignments
+        </div>
+      )}
+
       {/* Timeline View */}
       {view === 'timeline' && (
         <div className="space-y-6">
           {activeProjects.map(project => {
-            const projectAssignments = initialAssignments.filter(
+            const projectAssignments = filteredAssignments.filter(
               a => a.project_id === project.id
             )
 
@@ -366,7 +460,7 @@ export default function PlanningBoard({
       {/* Gantt View */}
       {view === 'gantt' && (
         <GanttView
-          assignments={initialAssignments.map(a => ({
+          assignments={filteredAssignments.map(a => ({
             ...a,
             project: { ...a.project, id: a.project_id },
             crew_member: { ...a.crew_member, id: a.crew_member_id }

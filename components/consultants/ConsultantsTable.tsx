@@ -1,8 +1,23 @@
+/**
+ * ConsultantsTable Component
+ * 
+ * Main table component for displaying consultants with filtering capabilities.
+ * Uses nuqs for URL-persisted filter state (shareable, survives refresh).
+ * 
+ * Features:
+ * - Search by name, role, or email
+ * - Filter by status (active, inactive, on_leave)
+ * - Results count display
+ */
+
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
-import { UserCog, Anchor, Search } from 'lucide-react'
+import { UserCog, Anchor } from 'lucide-react'
+import { useTableFilters, useFilterKeyboardShortcuts } from '@/lib/hooks/useSearchFilters'
+import SearchInput from '@/components/ui/SearchInput'
+import FilterPills, { consultantStatusOptions } from '@/components/ui/FilterPills'
 
 interface ConsultantWithCount {
   id: string
@@ -20,53 +35,71 @@ interface ConsultantsTableProps {
 }
 
 export default function ConsultantsTable({ consultants }: ConsultantsTableProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string | null>(null)
-
+  // Use URL-persisted filter state
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    status,
+    toggleStatus,
+    clearAll,
+    hasFilters,
+    activeFilterCount,
+  } = useTableFilters({ enableTypeFilter: false, enableDateFilter: false })
+  
+  // Register keyboard shortcut (Escape to clear)
+  useFilterKeyboardShortcuts(clearAll)
+  
+  // Filter consultants based on current filters
   const filteredConsultants = useMemo(() => {
     return consultants.filter((consultant) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
+      // Search filter (debounced)
+      if (debouncedSearch) {
+        const query = debouncedSearch.toLowerCase()
         const matchesName = consultant.full_name.toLowerCase().includes(query)
         const matchesRole = consultant.role?.toLowerCase().includes(query) || false
         const matchesEmail = consultant.email?.toLowerCase().includes(query) || false
         if (!matchesName && !matchesRole && !matchesEmail) return false
       }
-
+      
       // Status filter
-      if (statusFilter && consultant.status !== statusFilter) return false
-
+      if (status && consultant.status !== status) return false
+      
       return true
     })
-  }, [consultants, searchQuery, statusFilter])
-
+  }, [consultants, debouncedSearch, status])
+  
   return (
     <div>
       {/* Filters */}
-      <div className="mb-4 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search consultants..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+      <div className="space-y-4 mb-6">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search consultants..."
+          shortcutHint="/"
+        />
+        
+        <div className="flex flex-wrap items-center gap-4">
+          <FilterPills
+            label="Status"
+            options={consultantStatusOptions}
+            value={status}
+            onChange={toggleStatus}
           />
+          
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
-        <select
-          value={statusFilter || ''}
-          onChange={(e) => setStatusFilter(e.target.value || null)}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="on_leave">On Leave</option>
-        </select>
       </div>
-
+      
+      {/* Empty state */}
       {filteredConsultants.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
           <UserCog className="mx-auto h-12 w-12 text-gray-400" />
@@ -76,6 +109,14 @@ export default function ConsultantsTable({ consultants }: ConsultantsTableProps)
               ? 'Get started by adding a new consultant.'
               : 'Try adjusting your search or filters.'}
           </p>
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -145,11 +186,16 @@ export default function ConsultantsTable({ consultants }: ConsultantsTableProps)
           </table>
         </div>
       )}
-
+      
       {/* Results count */}
-      {(searchQuery || statusFilter) && filteredConsultants.length > 0 && (
+      {hasFilters && filteredConsultants.length > 0 && (
         <p className="mt-2 text-sm text-gray-500">
           Showing {filteredConsultants.length} of {consultants.length} consultants
+          {activeFilterCount > 0 && (
+            <span className="ml-2 text-blue-600">
+              ({activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} applied)
+            </span>
+          )}
         </p>
       )}
     </div>

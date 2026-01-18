@@ -1,9 +1,24 @@
+/**
+ * CrewList Component
+ * 
+ * Main list component for displaying crew members with filtering capabilities.
+ * Uses nuqs for URL-persisted filter state (shareable, survives refresh).
+ * 
+ * Features:
+ * - Search by name, role, or email
+ * - Filter by status (available, on_project, on_leave)
+ * - Filter by role (dynamic from data)
+ * - Current/upcoming assignment preview
+ * - Results count display
+ */
+
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Users, Phone, Mail, Calendar, ArrowRight } from 'lucide-react'
 import { format } from 'date-fns'
+import { useTableFilters, useSingleFilter, useFilterKeyboardShortcuts } from '@/lib/hooks/useSearchFilters'
 import CrewFilter from './CrewFilter'
 import QuickCrewStatus from './QuickCrewStatus'
 
@@ -31,59 +46,99 @@ interface CrewListProps {
 }
 
 export default function CrewList({ crew }: CrewListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string | null>(null)
-
+  // Use URL-persisted filter state
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    status,
+    toggleStatus,
+    clearAll: clearBaseFilters,
+    hasFilters: hasBaseFilters,
+    activeFilterCount,
+  } = useTableFilters({ enableTypeFilter: false, enableDateFilter: false })
+  
+  // Role filter (separate from base filters)
+  const { value: role, toggle: toggleRole, clear: clearRole, hasValue: hasRole } = useSingleFilter('role')
+  
+  // Combined clear all
+  const clearAll = useCallback(() => {
+    clearBaseFilters()
+    clearRole()
+  }, [clearBaseFilters, clearRole])
+  
+  const hasFilters = hasBaseFilters || hasRole
+  
+  // Register keyboard shortcut (Escape to clear)
+  useFilterKeyboardShortcuts(clearAll)
+  
   const today = new Date().toISOString().split('T')[0]
-
+  
+  // Extract unique roles from crew data
+  const uniqueRoles = useMemo(() => {
+    const roles = new Set(crew.map(member => member.role))
+    return Array.from(roles).sort()
+  }, [crew])
+  
+  // Get active or upcoming assignment for a crew member
   const getActiveAssignment = useCallback((member: CrewWithAssignments) => {
     if (!member.assignments || member.assignments.length === 0) return null
-
+    
     const active = member.assignments.find(a => {
       const start = new Date(a.start_date)
       const end = new Date(a.end_date)
       const now = new Date(today)
       return start <= now && end >= now
     })
-
+    
     if (active) return { ...active, type: 'active' as const }
-
+    
     const upcoming = member.assignments
       .filter(a => new Date(a.start_date) > new Date(today))
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())[0]
-
+    
     if (upcoming) return { ...upcoming, type: 'upcoming' as const }
-
+    
     return null
   }, [today])
-
+  
+  // Filter crew based on current filters
   const filteredCrew = useMemo(() => {
     return crew.filter((member) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
+      // Search filter (debounced)
+      if (debouncedSearch) {
+        const query = debouncedSearch.toLowerCase()
         const matchesName = member.full_name.toLowerCase().includes(query)
         const matchesRole = member.role.toLowerCase().includes(query)
         const matchesEmail = member.email?.toLowerCase().includes(query)
         if (!matchesName && !matchesRole && !matchesEmail) return false
       }
-
+      
       // Status filter
-      if (statusFilter && member.status !== statusFilter) return false
-
+      if (status && member.status !== status) return false
+      
+      // Role filter
+      if (role && member.role !== role) return false
+      
       return true
     })
-  }, [crew, searchQuery, statusFilter])
-
+  }, [crew, debouncedSearch, status, role])
+  
   return (
     <div>
+      {/* Filters */}
       <CrewFilter
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
+        searchQuery={search}
+        onSearchChange={setSearch}
+        statusFilter={status}
+        onStatusChange={toggleStatus}
+        roles={uniqueRoles}
+        roleFilter={role}
+        onRoleChange={toggleRole}
+        onClearAll={clearAll}
       />
-
+      
+      {/* Empty state */}
       {filteredCrew.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
           <Users className="mx-auto h-12 w-12 text-gray-400" />
@@ -93,6 +148,14 @@ export default function CrewList({ crew }: CrewListProps) {
               ? 'Get started by adding your first crew member.'
               : 'Try adjusting your search or filters.'}
           </p>
+          {hasFilters && (
+            <button
+              onClick={clearAll}
+              className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -100,7 +163,7 @@ export default function CrewList({ crew }: CrewListProps) {
             {filteredCrew.map((member) => {
               const currentAssignment = getActiveAssignment(member)
               const assignmentCount = member.assignments?.length || 0
-
+              
               return (
                 <li key={member.id}>
                   <Link
@@ -119,7 +182,7 @@ export default function CrewList({ crew }: CrewListProps) {
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          {/* Current/Upcoming Assignment Preview - visible on all screens */}
+                          {/* Current/Upcoming Assignment Preview */}
                           {currentAssignment && (
                             <div className="flex items-center gap-2">
                               <div
@@ -136,24 +199,24 @@ export default function CrewList({ crew }: CrewListProps) {
                               </div>
                             </div>
                           )}
-
+                          
                           {/* Assignment Count */}
                           <div className="flex items-center text-sm text-gray-500" title="Total assignments">
                             <Calendar className="h-4 w-4 mr-1 text-gray-400" />
                             {assignmentCount}
                           </div>
-
+                          
                           {/* Status Badge */}
                           <QuickCrewStatus
                             crewId={member.id}
                             currentStatus={member.status}
                           />
-
+                          
                           <ArrowRight className="h-4 w-4 text-gray-400" />
                         </div>
                       </div>
-
-                      {/* Contact info and mobile assignment preview */}
+                      
+                      {/* Contact info */}
                       <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500">
                         {member.email && (
                           <span className="flex items-center">
@@ -184,11 +247,16 @@ export default function CrewList({ crew }: CrewListProps) {
           </ul>
         </div>
       )}
-
+      
       {/* Results count */}
-      {(searchQuery || statusFilter) && filteredCrew.length > 0 && (
+      {hasFilters && filteredCrew.length > 0 && (
         <p className="mt-2 text-sm text-gray-500">
           Showing {filteredCrew.length} of {crew.length} crew members
+          {(activeFilterCount + (hasRole ? 1 : 0)) > 0 && (
+            <span className="ml-2 text-blue-600">
+              ({activeFilterCount + (hasRole ? 1 : 0)} filter{(activeFilterCount + (hasRole ? 1 : 0)) > 1 ? 's' : ''} applied)
+            </span>
+          )}
         </p>
       )}
     </div>
