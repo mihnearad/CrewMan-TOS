@@ -1,0 +1,272 @@
+'use client'
+
+import { useState, useMemo, useCallback, useRef } from 'react'
+import { DndContext, DragEndEvent, DragMoveEvent, DragStartEvent, pointerWithin } from '@dnd-kit/core'
+import { format, addDays, differenceInDays } from 'date-fns'
+import type {
+  GanttAssignment,
+  GanttProject,
+  GanttCrewMember,
+  GanttViewMode,
+  GanttZoomLevel,
+  GanttTimeRange,
+  GanttItem,
+} from '@/lib/gantt/types'
+import {
+  assignmentsToRows,
+  getDefaultTimeRange,
+  navigateTimeRange,
+  getTimelineWidth,
+  getDateFromPosition,
+  getPixelsPerUnit,
+  datesOverlap,
+} from '@/lib/gantt/utils'
+import { updateAssignment } from '@/app/planning/actions'
+import GanttControls from './GanttControls'
+import GanttHeader from './GanttHeader'
+import GanttSidebar from './GanttSidebar'
+import GanttRow from './GanttRow'
+
+interface GanttViewProps {
+  assignments: GanttAssignment[]
+  projects: GanttProject[]
+  crewMembers: GanttCrewMember[]
+  filterProjectId?: string
+}
+
+const ROW_HEIGHT = 50
+const HEADER_HEIGHT = 50
+const SIDEBAR_WIDTH = 200
+
+export default function GanttView({
+  assignments,
+  projects,
+  crewMembers,
+  filterProjectId,
+}: GanttViewProps) {
+  const [viewMode, setViewMode] = useState<GanttViewMode>('by-crew')
+  const [zoomLevel, setZoomLevel] = useState<GanttZoomLevel>('week')
+  const [timeRange, setTimeRange] = useState<GanttTimeRange>(getDefaultTimeRange)
+  const [draggedItem, setDraggedItem] = useState<GanttItem | null>(null)
+  const [dragOffset, setDragOffset] = useState<number>(0)
+  const [conflictingItems, setConflictingItems] = useState<Set<string>>(new Set())
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  // Filter assignments if showing project-specific view
+  const filteredAssignments = useMemo(() => {
+    if (!filterProjectId) return assignments
+    return assignments.filter(a => a.project_id === filterProjectId)
+  }, [assignments, filterProjectId])
+
+  // Filter entities based on filter
+  const filteredProjects = useMemo(() => {
+    if (!filterProjectId) return projects.filter(p => p.status === 'active')
+    return projects.filter(p => p.id === filterProjectId)
+  }, [projects, filterProjectId])
+
+  const filteredCrew = useMemo(() => {
+    if (!filterProjectId) return crewMembers
+    // Show crew that have assignments to this project
+    const assignedCrewIds = new Set(filteredAssignments.map(a => a.crew_member_id))
+    return crewMembers.filter(c => assignedCrewIds.has(c.id))
+  }, [crewMembers, filteredAssignments, filterProjectId])
+
+  // Convert to rows based on view mode
+  const rows = useMemo(
+    () => assignmentsToRows(filteredAssignments, filteredProjects, filteredCrew, viewMode),
+    [filteredAssignments, filteredProjects, filteredCrew, viewMode]
+  )
+
+  const timelineWidth = useMemo(
+    () => getTimelineWidth(timeRange, zoomLevel),
+    [timeRange, zoomLevel]
+  )
+
+  // Check for conflicts during drag
+  const checkDragConflicts = useCallback(
+    (item: GanttItem, newStart: Date, newEnd: Date): boolean => {
+      // Find all assignments for this crew member
+      const crewId = item.assignment.crew_member_id
+      const otherAssignments = filteredAssignments.filter(
+        a => a.crew_member_id === crewId && a.id !== item.id
+      )
+
+      // Check for overlaps
+      return otherAssignments.some(a => {
+        const start = new Date(a.start_date)
+        const end = new Date(a.end_date)
+        return datesOverlap(newStart, newEnd, start, end)
+      })
+    },
+    [filteredAssignments]
+  )
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const item = active.data.current?.item as GanttItem
+    if (item) {
+      setDraggedItem(item)
+    }
+  }
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    if (!draggedItem) return
+
+    const { delta } = event
+    const pixelsPerUnit = getPixelsPerUnit(zoomLevel)
+    const daysDelta = Math.round((delta.x / pixelsPerUnit) * (zoomLevel === 'day' ? 1 : zoomLevel === 'week' ? 7 : 30))
+
+    const newStart = addDays(draggedItem.start, daysDelta)
+    const newEnd = addDays(draggedItem.end, daysDelta)
+
+    const hasConflict = checkDragConflicts(draggedItem, newStart, newEnd)
+
+    setConflictingItems(prev => {
+      const next = new Set(prev)
+      if (hasConflict) {
+        next.add(draggedItem.id)
+      } else {
+        next.delete(draggedItem.id)
+      }
+      return next
+    })
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    if (!draggedItem) {
+      setDraggedItem(null)
+      setConflictingItems(new Set())
+      return
+    }
+
+    const { delta } = event
+    const pixelsPerUnit = getPixelsPerUnit(zoomLevel)
+    const daysDelta = Math.round((delta.x / pixelsPerUnit) * (zoomLevel === 'day' ? 1 : zoomLevel === 'week' ? 7 : 30))
+
+    if (daysDelta === 0) {
+      setDraggedItem(null)
+      setConflictingItems(new Set())
+      return
+    }
+
+    const newStart = addDays(draggedItem.start, daysDelta)
+    const newEnd = addDays(draggedItem.end, daysDelta)
+
+    // Check for conflicts before saving
+    const hasConflict = checkDragConflicts(draggedItem, newStart, newEnd)
+    if (hasConflict) {
+      // Show conflict warning
+      setConflictingItems(prev => new Set([...prev, draggedItem.id]))
+      setTimeout(() => setConflictingItems(new Set()), 2000)
+      setDraggedItem(null)
+      return
+    }
+
+    // Save the update
+    setIsUpdating(true)
+    try {
+      const result = await updateAssignment(draggedItem.id, {
+        startDate: format(newStart, 'yyyy-MM-dd'),
+        endDate: format(newEnd, 'yyyy-MM-dd'),
+      })
+
+      if (result.error) {
+        alert(result.error)
+      } else {
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Failed to update assignment:', error)
+      alert('Failed to update assignment')
+    } finally {
+      setIsUpdating(false)
+      setDraggedItem(null)
+      setConflictingItems(new Set())
+    }
+  }
+
+  const handleNavigate = (direction: 'prev' | 'next' | 'today') => {
+    setTimeRange(navigateTimeRange(timeRange, direction, zoomLevel))
+  }
+
+  return (
+    <div className="bg-white shadow rounded-lg overflow-hidden">
+      <GanttControls
+        viewMode={viewMode}
+        zoomLevel={zoomLevel}
+        onViewModeChange={setViewMode}
+        onZoomChange={setZoomLevel}
+        onNavigate={handleNavigate}
+      />
+
+      {isUpdating && (
+        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
+          <div className="text-gray-600">Updating...</div>
+        </div>
+      )}
+
+      <DndContext
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="relative">
+          {/* Header */}
+          <GanttHeader
+            timeRange={timeRange}
+            zoomLevel={zoomLevel}
+            sidebarWidth={SIDEBAR_WIDTH}
+          />
+
+          {/* Body with sidebar and rows */}
+          <div
+            ref={scrollContainerRef}
+            className="overflow-x-auto overflow-y-auto"
+            style={{ maxHeight: 'calc(100vh - 300px)' }}
+          >
+            <div className="flex" style={{ width: SIDEBAR_WIDTH + timelineWidth }}>
+              {/* Sidebar */}
+              <GanttSidebar
+                rows={rows}
+                rowHeight={ROW_HEIGHT}
+                width={SIDEBAR_WIDTH}
+              />
+
+              {/* Rows */}
+              <div className="flex-1" style={{ width: timelineWidth }}>
+                {rows.length === 0 ? (
+                  <div className="flex items-center justify-center h-32 text-gray-500">
+                    No assignments to display
+                  </div>
+                ) : (
+                  rows.map((row) => (
+                    <GanttRow
+                      key={row.id}
+                      row={row}
+                      viewMode={viewMode}
+                      timeRange={timeRange}
+                      zoomLevel={zoomLevel}
+                      rowHeight={ROW_HEIGHT}
+                      conflictingItems={conflictingItems}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </DndContext>
+
+      {/* Legend for conflict indicator */}
+      {conflictingItems.size > 0 && (
+        <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-sm text-red-600 flex items-center gap-2">
+          <div className="w-3 h-3 bg-red-500 rounded-full" />
+          <span>Conflict detected - this crew member is already assigned during this period</span>
+        </div>
+      )}
+    </div>
+  )
+}
