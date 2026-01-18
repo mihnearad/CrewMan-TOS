@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { assignCrew, removeAssignment, updateAssignment } from '@/app/planning/actions'
 import { Plus, X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
 import {
@@ -19,7 +20,16 @@ import {
   parseISO
 } from 'date-fns'
 import { getAssignmentStatus, getStatusColorClasses } from '@/lib/utils'
-import GanttView from '@/components/planning/GanttView'
+
+// Lazy load heavy GanttView component
+const GanttView = dynamic(() => import('@/components/planning/GanttView'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-64 bg-white rounded-lg border">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  ),
+  ssr: false
+})
 
 interface Assignment {
   id: string

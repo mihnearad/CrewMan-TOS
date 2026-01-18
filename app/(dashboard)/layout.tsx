@@ -27,10 +27,7 @@ export default async function DashboardLayout({
       <div className="flex h-screen bg-gray-100">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-16 items-center justify-between bg-white px-6 shadow">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Welcome, {user.email}
-              </h2>
+          <header className="flex h-16 items-center justify-end bg-white px-6 shadow">
               <div className="flex items-center gap-4">
                 <Link
                   href="/profile"

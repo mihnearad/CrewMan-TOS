@@ -13,29 +13,20 @@ interface EndingAssignment {
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  // Get counts for quick stats
-  const { count: projectCount } = await supabase
-    .from('projects')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
-
-  const { count: crewCount } = await supabase
-    .from('crew_members')
-    .select('*', { count: 'exact', head: true })
-
-  const { count: assignmentCount } = await supabase
-    .from('assignments')
-    .select('*', { count: 'exact', head: true })
-
-  const { count: clientCount } = await supabase
-    .from('clients')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
-
-  const { count: consultantCount } = await supabase
-    .from('consultants')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
+  // Get counts for quick stats - parallelized for better performance
+  const [
+    { count: projectCount },
+    { count: crewCount },
+    { count: assignmentCount },
+    { count: clientCount },
+    { count: consultantCount }
+  ] = await Promise.all([
+    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('crew_members').select('*', { count: 'exact', head: true }),
+    supabase.from('assignments').select('*', { count: 'exact', head: true }),
+    supabase.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('consultants').select('*', { count: 'exact', head: true }).eq('status', 'active')
+  ])
 
   // Get assignments ending within 7 days
   const today = new Date().toISOString().split('T')[0]

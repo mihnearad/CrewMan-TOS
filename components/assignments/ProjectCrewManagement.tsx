@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useCallback } from 'react'
+import { useState, useTransition, useRef, useCallback, useMemo, memo } from 'react'
 import { format, parseISO, differenceInDays, isWithinInterval, eachDayOfInterval, addDays } from 'date-fns'
 import {
   Users,
@@ -25,6 +25,26 @@ import {
   DragStartEvent,
   DragMoveEvent
 } from '@dnd-kit/core'
+
+// Debounce utility for conflict checking
+function useDebouncedCallback<T extends (...args: unknown[]) => unknown>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args)
+      }, delay)
+    }) as T,
+    [callback, delay]
+  )
+}
 
 // Types
 interface CrewMember {
@@ -139,8 +159,8 @@ function AddCrewModal({
     onClose()
   }
 
-  // Check for conflicts when crew or dates change
-  const handleCheckConflict = async () => {
+  // Check for conflicts when crew or dates change (debounced)
+  const handleCheckConflict = useCallback(async () => {
     if (!selectedCrewId || !startDate || !endDate) {
       setConflictWarning(null)
       return
@@ -155,7 +175,9 @@ function AddCrewModal({
     } else {
       setConflictWarning(null)
     }
-  }
+  }, [selectedCrewId, startDate, endDate])
+
+  const debouncedCheckConflict = useDebouncedCallback(handleCheckConflict, 300)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -228,7 +250,7 @@ function AddCrewModal({
             value={selectedCrewId}
             onChange={(e) => {
               setSelectedCrewId(e.target.value)
-              setTimeout(handleCheckConflict, 100)
+              debouncedCheckConflict()
             }}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           >
@@ -253,7 +275,7 @@ function AddCrewModal({
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value)
-                setTimeout(handleCheckConflict, 100)
+                debouncedCheckConflict()
               }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
@@ -268,7 +290,7 @@ function AddCrewModal({
               value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value)
-                setTimeout(handleCheckConflict, 100)
+                debouncedCheckConflict()
               }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
@@ -347,7 +369,7 @@ function EditAssignmentModal({
     onClose()
   }
 
-  const handleCheckConflict = async () => {
+  const handleCheckConflict = useCallback(async () => {
     if (!assignment || !startDate || !endDate) {
       setConflictWarning(null)
       return
@@ -367,7 +389,9 @@ function EditAssignmentModal({
     } else {
       setConflictWarning(null)
     }
-  }
+  }, [assignment, startDate, endDate])
+
+  const debouncedCheckConflict = useDebouncedCallback(handleCheckConflict, 300)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -444,7 +468,7 @@ function EditAssignmentModal({
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value)
-                setTimeout(handleCheckConflict, 100)
+                debouncedCheckConflict()
               }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
@@ -459,7 +483,7 @@ function EditAssignmentModal({
               value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value)
-                setTimeout(handleCheckConflict, 100)
+                debouncedCheckConflict()
               }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
@@ -589,8 +613,8 @@ function AssignmentCard({
   )
 }
 
-// Draggable Assignment Bar Component
-function DraggableAssignmentBar({
+// Draggable Assignment Bar Component - memoized for performance
+const DraggableAssignmentBar = memo(function DraggableAssignmentBar({
   assignment,
   style,
   isActive,
@@ -633,7 +657,7 @@ function DraggableAssignmentBar({
       </div>
     </div>
   )
-}
+})
 
 // Assignment Timeline Component with Drag and Drop
 function AssignmentTimeline({

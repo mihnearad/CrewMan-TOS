@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CrewMan TOS",
   description: "Crew Management System",
+  icons: {
+    icon: "/Logo.png",
+    apple: "/Logo.png",
+  },
 };
 
 export default function RootLayout({

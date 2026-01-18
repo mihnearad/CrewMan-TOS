@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Users, Phone, Mail, Calendar, ArrowRight } from 'lucide-react'
 import { format } from 'date-fns'
@@ -36,7 +36,7 @@ export default function CrewList({ crew }: CrewListProps) {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const getActiveAssignment = (member: CrewWithAssignments) => {
+  const getActiveAssignment = useCallback((member: CrewWithAssignments) => {
     if (!member.assignments || member.assignments.length === 0) return null
 
     const active = member.assignments.find(a => {
@@ -55,7 +55,7 @@ export default function CrewList({ crew }: CrewListProps) {
     if (upcoming) return { ...upcoming, type: 'upcoming' as const }
 
     return null
-  }
+  }, [today])
 
   const filteredCrew = useMemo(() => {
     return crew.filter((member) => {
