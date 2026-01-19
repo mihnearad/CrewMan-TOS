@@ -46,9 +46,9 @@ export default function GanttItem({
     left: left,
     width: Math.max(width, 24), // Minimum width (smaller for compact view)
     transform: CSS.Translate.toString(transform),
-    backgroundColor: hasConflict ? '#fecaca' : color + '90',
+    backgroundColor: hasConflict ? '#fecaca' : color + 'f0', // Nearly opaque (f0 = 94% opacity)
     borderLeft: `3px solid ${hasConflict ? '#ef4444' : color}`,
-    opacity: isDragging ? 0.8 : 1,
+    opacity: isDragging ? 0.9 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
     zIndex: isDragging ? 100 : 1,
   }
@@ -62,9 +62,9 @@ export default function GanttItem({
   return (
     <div
       ref={setNodeRef}
-      className={`absolute top-0.5 bottom-0.5 rounded-r flex items-center px-1 text-[10px] select-none transition-shadow ${
-        isDragging ? 'shadow-lg' : 'hover:shadow-md'
-      } ${hasConflict ? 'ring-1 ring-red-400' : ''}`}
+      className={`absolute top-1 bottom-1 rounded-md flex items-center px-1.5 text-[10px] select-none transition-all duration-150 ${
+        isDragging ? 'shadow-lg scale-[1.02]' : 'hover:shadow-md hover:brightness-105'
+      } ${hasConflict ? 'ring-2 ring-red-400 ring-offset-1' : ''}`}
       style={style}
       title={`${crewMember.full_name} - ${project.name}\n${formatDateRange(item.start, item.end)}`}
       {...listeners}
@@ -72,7 +72,7 @@ export default function GanttItem({
     >
       {/* Left resize handle */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30"
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30 dark:hover:bg-gray-300/30"
         onMouseDown={(e) => handleMouseDown(e, 'start')}
       />
 
@@ -85,7 +85,7 @@ export default function GanttItem({
 
       {/* Right resize handle */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30"
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30 dark:hover:bg-gray-300/30"
         onMouseDown={(e) => handleMouseDown(e, 'end')}
       />
 

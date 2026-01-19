@@ -2,12 +2,39 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Anchor, Users, Calendar, ArrowRight, Plus, UserPlus, ClipboardList, AlertTriangle, Building2, UserCog } from 'lucide-react'
 import { format, addDays, differenceInDays } from 'date-fns'
+import DashboardPlanningWidget from '@/components/dashboard/DashboardPlanningWidget'
 
 interface EndingAssignment {
   id: string
   end_date: string
   project: { name: string; color: string }
   crew_member: { id: string; full_name: string }
+}
+
+interface PlanningAssignment {
+  id: string
+  project_id: string
+  crew_member_id: string
+  start_date: string
+  end_date: string
+  role_on_project: string | null
+  project: { id: string; name: string; color: string }
+  crew_member: { id: string; full_name: string; role: string }
+}
+
+interface Project {
+  id: string
+  name: string
+  type: string
+  status: string
+  color: string
+}
+
+interface CrewMember {
+  id: string
+  full_name: string
+  role: string
+  status: string
 }
 
 export default async function DashboardPage() {
@@ -32,20 +59,52 @@ export default async function DashboardPage() {
   const today = new Date().toISOString().split('T')[0]
   const sevenDaysFromNow = addDays(new Date(), 7).toISOString().split('T')[0]
 
-  const { data: endingAssignments } = await supabase
-    .from('assignments')
-    .select(`
-      id,
-      end_date,
-      project:projects(name, color),
-      crew_member:crew_members(id, full_name)
-    `)
-    .gte('end_date', today)
-    .lte('end_date', sevenDaysFromNow)
-    .order('end_date', { ascending: true })
-    .limit(5)
+  // Fetch data for planning widget and ending assignments in parallel
+  const [
+    { data: endingAssignments },
+    { data: planningAssignments },
+    { data: projects },
+    { data: crewMembers }
+  ] = await Promise.all([
+    supabase
+      .from('assignments')
+      .select(`
+        id,
+        end_date,
+        project:projects(name, color),
+        crew_member:crew_members(id, full_name)
+      `)
+      .gte('end_date', today)
+      .lte('end_date', sevenDaysFromNow)
+      .order('end_date', { ascending: true })
+      .limit(5),
+    supabase
+      .from('assignments')
+      .select(`
+        id,
+        project_id,
+        crew_member_id,
+        start_date,
+        end_date,
+        role_on_project,
+        project:projects(id, name, color),
+        crew_member:crew_members(id, full_name, role)
+      `)
+      .order('start_date', { ascending: true }),
+    supabase
+      .from('projects')
+      .select('id, name, type, status, color')
+      .order('name'),
+    supabase
+      .from('crew_members')
+      .select('id, full_name, role, status')
+      .order('full_name')
+  ])
 
   const typedEndingAssignments = endingAssignments as EndingAssignment[] | null
+  const typedPlanningAssignments = planningAssignments as PlanningAssignment[] | null
+  const typedProjects = projects as Project[] | null
+  const typedCrewMembers = crewMembers as CrewMember[] | null
 
   return (
     <div>
@@ -211,6 +270,15 @@ export default async function DashboardPage() {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View Planning</span>
           </Link>
         </div>
+      </div>
+
+      {/* Planning Overview */}
+      <div className="mb-8">
+        <DashboardPlanningWidget
+          assignments={typedPlanningAssignments || []}
+          projects={typedProjects || []}
+          crewMembers={typedCrewMembers || []}
+        />
       </div>
 
       {/* Assignments Ending Soon */}

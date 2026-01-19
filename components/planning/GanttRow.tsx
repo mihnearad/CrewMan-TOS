@@ -1,7 +1,7 @@
 'use client'
 
 import { useDroppable } from '@dnd-kit/core'
-import { isToday, isSameDay } from 'date-fns'
+import { isToday, isSameWeek, isSameMonth } from 'date-fns'
 import type { GanttRow as GanttRowType, GanttViewMode, GanttTimeRange, GanttZoomLevel } from '@/lib/gantt/types'
 import { getTimeScaleColumns, getPixelsPerUnit } from '@/lib/gantt/utils'
 import GanttItem from './GanttItem'
@@ -34,28 +34,45 @@ export default function GanttRow({
 
   const columns = getTimeScaleColumns(timeRange, zoomLevel)
   const pixelsPerUnit = getPixelsPerUnit(zoomLevel)
+  const today = new Date()
+
+  // Determine if a column represents the current time period
+  const isCurrentPeriod = (columnDate: Date): boolean => {
+    switch (zoomLevel) {
+      case 'day':
+        return isToday(columnDate)
+      case 'week':
+        return isSameWeek(columnDate, today, { weekStartsOn: 0 })
+      case 'month':
+        return isSameMonth(columnDate, today)
+      default:
+        return false
+    }
+  }
 
   // Vessel header row - just show background, no items
   if (row.isGroupHeader) {
     return (
       <div
-        className="relative border-b flex"
+        className="relative flex border-b border-slate-200/60 dark:border-gray-700/60"
         style={{ 
           height: rowHeight,
-          backgroundColor: row.color ? `${row.color}15` : '#f3f4f6',
+          backgroundColor: row.color ? `${row.color}12` : undefined,
         }}
       >
         {/* Grid background */}
-        <div className="absolute inset-0 flex pointer-events-none">
+        <div className="absolute inset-0 flex pointer-events-none bg-slate-50 dark:bg-gray-800/50">
           {columns.map((column, idx) => {
-            const isCurrentDay = zoomLevel === 'day' && isToday(column.date)
+            const isCurrent = isCurrentPeriod(column.date)
             return (
               <div
                 key={idx}
-                className={`flex-shrink-0 border-r border-gray-200/50 ${
-                  isCurrentDay ? 'bg-blue-100/30' : ''
+                className={`flex-shrink-0 border-r border-slate-200/30 dark:border-gray-700/30 ${
+                  isCurrent ? 'bg-blue-50/40 dark:bg-blue-900/20' : ''
                 }`}
-                style={{ width: pixelsPerUnit }}
+                style={{ 
+                  width: pixelsPerUnit,
+                }}
               />
             )
           })}
@@ -67,20 +84,24 @@ export default function GanttRow({
   return (
     <div
       ref={setNodeRef}
-      className={`relative border-b flex ${isOver ? 'bg-blue-50' : 'bg-white'}`}
-      style={{ height: rowHeight }}
+      className={`relative flex transition-colors duration-100 border-b border-slate-200/50 dark:border-gray-700/50 ${isOver ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-white dark:bg-gray-900'}`}
+      style={{ 
+        height: rowHeight,
+      }}
     >
       {/* Grid background */}
       <div className="absolute inset-0 flex pointer-events-none">
         {columns.map((column, idx) => {
-          const isCurrentDay = zoomLevel === 'day' && isToday(column.date)
+          const isCurrent = isCurrentPeriod(column.date)
           return (
             <div
               key={idx}
-              className={`flex-shrink-0 border-r ${
-                isCurrentDay ? 'bg-blue-50/50' : ''
+              className={`flex-shrink-0 border-r border-slate-200/35 dark:border-gray-700/35 ${
+                isCurrent ? 'bg-blue-50/40 dark:bg-blue-900/20' : ''
               }`}
-              style={{ width: pixelsPerUnit }}
+              style={{ 
+                width: pixelsPerUnit,
+              }}
             />
           )
         })}

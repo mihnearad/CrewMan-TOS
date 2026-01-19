@@ -31,7 +31,7 @@ export default function GanttSidebar({
 
   return (
     <div
-      className="bg-white"
+      className="bg-white dark:bg-gray-900"
       style={{ width }}
     >
       {rows.map((row) => {
@@ -40,20 +40,20 @@ export default function GanttSidebar({
           return (
             <div
               key={row.id}
-              className="border-b px-2 flex items-center"
+              className="px-2.5 flex items-center bg-slate-50 dark:bg-gray-800/50 border-b border-slate-200/60 dark:border-gray-700/60"
               style={{ 
                 height: rowHeight,
-                backgroundColor: row.color ? `${row.color}15` : '#f3f4f6',
+                backgroundColor: row.color ? `${row.color}12` : undefined,
               }}
             >
               <Anchor 
-                className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" 
-                style={{ color: row.color || '#6b7280' }}
+                className="w-3.5 h-3.5 mr-2 flex-shrink-0" 
+                style={{ color: row.color || '#64748b' }}
               />
               <div className="min-w-0 flex-1">
                 <div 
-                  className="text-xs font-semibold truncate"
-                  style={{ color: row.color || '#111827' }}
+                  className="text-xs font-semibold truncate tracking-wide dark:text-slate-200"
+                  style={{ color: row.color || undefined }}
                 >
                   {row.label}
                 </div>
@@ -69,10 +69,12 @@ export default function GanttSidebar({
           <div
             key={row.id}
             onClick={() => handleRowClick(row)}
-            className={`border-b px-2 flex items-center bg-white text-[11px] gap-1 ${
-              isClickable ? 'cursor-pointer hover:bg-blue-50 transition-colors' : ''
+            className={`px-2.5 flex items-center bg-white dark:bg-gray-900 text-[11px] gap-1 border-b border-slate-200/50 dark:border-gray-700/50 ${
+              isClickable ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors duration-100' : ''
             }`}
-            style={{ height: rowHeight }}
+            style={{ 
+              height: rowHeight,
+            }}
           >
             {/* Indent for crew rows under vessel headers */}
             {row.parentGroupId && (
@@ -89,19 +91,19 @@ export default function GanttSidebar({
             
             {/* Name - takes available space */}
             <div className={`min-w-0 flex-1 truncate font-medium ${
-              isClickable ? 'text-blue-700 hover:text-blue-900' : 'text-gray-900'
+              isClickable ? 'text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300' : 'text-gray-900 dark:text-gray-100'
             }`}>
               {row.label}
             </div>
             
             {/* Position/Role - fixed width */}
-            <div className="w-[70px] truncate text-gray-600 text-center" title={row.sublabel}>
+            <div className="w-[70px] truncate text-gray-600 dark:text-gray-400 text-center" title={row.sublabel}>
               {row.sublabel || '-'}
             </div>
             
             {/* Flag State - fixed width */}
             <div 
-              className="w-[32px] text-center text-gray-500 font-mono text-[10px]"
+              className="w-[32px] text-center text-gray-500 dark:text-gray-500 font-mono text-[10px]"
               title={row.crewDetails?.flag_state ? `Flag: ${row.crewDetails.flag_state}` : undefined}
             >
               {row.crewDetails?.flag_state || '-'}
@@ -109,7 +111,7 @@ export default function GanttSidebar({
             
             {/* Airport code - fixed width */}
             <div 
-              className="w-[32px] text-gray-500 text-center font-mono text-[10px]"
+              className="w-[32px] text-gray-500 dark:text-gray-500 text-center font-mono text-[10px]"
               title={row.crewDetails?.home_airport || undefined}
             >
               {getAirportCode(row.crewDetails?.home_airport)}

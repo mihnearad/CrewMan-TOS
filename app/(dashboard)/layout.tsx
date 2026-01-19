@@ -29,7 +29,7 @@ export default async function DashboardLayout({
           <SidebarClient />
           <div className="flex flex-1 flex-col overflow-hidden">
             <Header signoutAction={signout} />
-            <main className="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-gray-950">
+            <main className="flex-1 overflow-y-auto p-3 bg-gray-100 dark:bg-gray-950">
               {children}
             </main>
           </div>

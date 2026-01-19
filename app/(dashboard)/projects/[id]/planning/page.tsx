@@ -70,8 +70,8 @@ export default async function ProjectPlanningPage({ params }: Props) {
   })
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
+    <div className="p-3">
+      <div className="mb-4">
         <Link
           href={`/projects/${id}`}
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"

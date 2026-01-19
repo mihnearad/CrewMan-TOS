@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Users, FolderOpen } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Users, FolderOpen, Calendar, CalendarDays, CalendarRange } from 'lucide-react'
 import type { GanttViewMode, GanttZoomLevel } from '@/lib/gantt/types'
 
 interface GanttControlsProps {
@@ -18,45 +18,39 @@ export default function GanttControls({
   onZoomChange,
   onNavigate,
 }: GanttControlsProps) {
-  const zoomLevels: GanttZoomLevel[] = ['day', 'week', 'month']
-  const currentZoomIndex = zoomLevels.indexOf(zoomLevel)
-
-  const handleZoomIn = () => {
-    if (currentZoomIndex > 0) {
-      onZoomChange(zoomLevels[currentZoomIndex - 1])
-    }
-  }
-
-  const handleZoomOut = () => {
-    if (currentZoomIndex < zoomLevels.length - 1) {
-      onZoomChange(zoomLevels[currentZoomIndex + 1])
-    }
-  }
+  // Time scale options with labels and icons
+  const timeScaleOptions: { value: GanttZoomLevel; label: string; icon: React.ReactNode }[] = [
+    { value: 'day', label: 'Days', icon: <Calendar className="w-4 h-4" /> },
+    { value: 'week', label: 'Weeks', icon: <CalendarDays className="w-4 h-4" /> },
+    { value: 'month', label: 'Months', icon: <CalendarRange className="w-4 h-4" /> },
+  ]
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
+    <div 
+      className="flex items-center justify-between px-5 py-3 bg-gradient-to-b from-white to-slate-50 dark:from-gray-900 dark:to-gray-850 border-b border-slate-200/80 dark:border-gray-700"
+    >
       {/* View Mode Toggle */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-600 mr-2">Group by:</span>
-        <div className="inline-flex rounded-md shadow-sm" role="group">
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Group by:</span>
+        <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-gray-800" role="group">
           <button
             onClick={() => onViewModeChange('by-crew')}
-            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border ${
+            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
               viewMode === 'by-crew'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            } rounded-l-md`}
+                ? 'bg-white text-slate-800 shadow-sm rounded-md dark:bg-gray-700 dark:text-white'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+            }`}
           >
             <Users className="w-4 h-4 mr-1.5" />
             Crew
           </button>
           <button
             onClick={() => onViewModeChange('by-project')}
-            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium border-t border-b border-r ${
+            className={`inline-flex items-center px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
               viewMode === 'by-project'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            } rounded-r-md`}
+                ? 'bg-white text-slate-800 shadow-sm rounded-md dark:bg-gray-700 dark:text-white'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+            }`}
           >
             <FolderOpen className="w-4 h-4 mr-1.5" />
             Vessel
@@ -65,50 +59,49 @@ export default function GanttControls({
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
           onClick={() => onNavigate('prev')}
-          className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+          className="p-2 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-100"
           title="Previous"
         >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
+          <ChevronLeft className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         </button>
         <button
           onClick={() => onNavigate('today')}
-          className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded transition-colors"
+          className="px-4 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-100"
         >
           Today
         </button>
         <button
           onClick={() => onNavigate('next')}
-          className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+          className="p-2 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-100"
           title="Next"
         >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
+          <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400" />
         </button>
       </div>
 
-      {/* Zoom Controls */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={handleZoomIn}
-          disabled={currentZoomIndex === 0}
-          className="p-1.5 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-5 h-5 text-gray-600" />
-        </button>
-        <span className="text-sm text-gray-600 min-w-[60px] text-center capitalize">
-          {zoomLevel}
-        </span>
-        <button
-          onClick={handleZoomOut}
-          disabled={currentZoomIndex === zoomLevels.length - 1}
-          className="p-1.5 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-5 h-5 text-gray-600" />
-        </button>
+      {/* Time Scale Filter - Direct Toggle Buttons */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">View:</span>
+        <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-gray-800" role="group">
+          {timeScaleOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onZoomChange(option.value)}
+              className={`inline-flex items-center px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
+                zoomLevel === option.value
+                  ? 'bg-white text-slate-800 shadow-sm rounded-md dark:bg-gray-700 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+              }`}
+              title={`View by ${option.label}`}
+            >
+              <span className="mr-1.5">{option.icon}</span>
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

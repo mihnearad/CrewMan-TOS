@@ -218,8 +218,8 @@ export default function PlanningBoard({
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-3">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Planning</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">Assign crew to vessels</p>

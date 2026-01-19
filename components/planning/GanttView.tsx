@@ -194,7 +194,7 @@ export default function GanttView({
   }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden border border-slate-200/60 dark:border-gray-700">
       <GanttControls
         viewMode={viewMode}
         zoomLevel={zoomLevel}
@@ -204,8 +204,8 @@ export default function GanttView({
       />
 
       {isUpdating && (
-        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
-          <div className="text-gray-600">Updating...</div>
+        <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 flex items-center justify-center z-50">
+          <div className="text-gray-600 dark:text-gray-300">Updating...</div>
         </div>
       )}
 
@@ -226,20 +226,24 @@ export default function GanttView({
             <div className="flex sticky top-0 z-10">
               {/* Sidebar header with column labels */}
               <div 
-                className="flex-shrink-0 border-b border-r-2 border-r-gray-300 bg-gray-100 sticky left-0 z-20 flex items-center px-2 gap-1 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-                style={{ width: SIDEBAR_WIDTH, height: HEADER_HEIGHT }}
+                className="flex-shrink-0 sticky left-0 z-20 flex items-center px-2.5 gap-1 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-850 border-b border-slate-200/60 dark:border-gray-700 border-r border-r-slate-200/40 dark:border-r-gray-700"
+                style={{ 
+                  width: SIDEBAR_WIDTH, 
+                  height: HEADER_HEIGHT,
+                  boxShadow: '2px 0 8px -4px rgba(0,0,0,0.06)',
+                }}
               >
                 <div className="w-2 flex-shrink-0" /> {/* Indent spacer */}
-                <div className="flex-1 text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                <div className="flex-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Name
                 </div>
-                <div className="w-[70px] text-[10px] font-medium text-gray-500 uppercase tracking-wide text-center">
+                <div className="w-[70px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                   Position
                 </div>
-                <div className="w-[32px] text-[10px] font-medium text-gray-500 uppercase tracking-wide text-center">
+                <div className="w-[32px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                   Flag
                 </div>
-                <div className="w-[32px] text-[10px] font-medium text-gray-500 uppercase tracking-wide text-center">
+                <div className="w-[32px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                   Apt
                 </div>
               </div>
@@ -255,10 +259,13 @@ export default function GanttView({
 
             {/* Body Row */}
             <div className="flex">
-              {/* Sidebar - sticky left with shadow separator */}
+              {/* Sidebar - sticky left with subtle shadow separator */}
               <div 
-                className="flex-shrink-0 sticky left-0 z-10 bg-white border-r-2 border-r-gray-300 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-                style={{ width: SIDEBAR_WIDTH }}
+                className="flex-shrink-0 sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-slate-200/40 dark:border-gray-700"
+                style={{ 
+                  width: SIDEBAR_WIDTH,
+                  boxShadow: '2px 0 8px -4px rgba(0,0,0,0.06)',
+                }}
               >
                 <GanttSidebar
                   rows={rows}
@@ -271,7 +278,7 @@ export default function GanttView({
               {/* Timeline rows */}
               <div style={{ width: timelineWidth }}>
                 {rows.length === 0 ? (
-                  <div className="flex items-center justify-center h-32 text-gray-500">
+                  <div className="flex items-center justify-center h-32 text-gray-500 dark:text-gray-400">
                     No assignments to display
                   </div>
                 ) : (
@@ -295,9 +302,11 @@ export default function GanttView({
 
       {/* Legend for conflict indicator */}
       {conflictingItems.size > 0 && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-sm text-red-600 flex items-center gap-2">
-          <div className="w-3 h-3 bg-red-500 rounded-full" />
-          <span>Conflict detected - this crew member is already assigned during this period</span>
+        <div 
+          className="px-5 py-2.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-2.5 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/30 dark:to-rose-900/30 border-t border-red-200/60 dark:border-red-800/60"
+        >
+          <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+          <span className="font-medium">Conflict detected - this crew member is already assigned during this period</span>
         </div>
       )}
 
