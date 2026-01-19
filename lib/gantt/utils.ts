@@ -25,6 +25,7 @@ import type {
   GanttTimeRange,
   GanttProject,
   GanttCrewMember,
+  GanttClient,
 } from './types'
 
 // Calculate the pixel width for a given time unit
@@ -136,7 +137,8 @@ export function assignmentsToRows(
   assignments: GanttAssignment[],
   projects: GanttProject[],
   crewMembers: GanttCrewMember[],
-  viewMode: GanttViewMode
+  viewMode: GanttViewMode,
+  clients?: GanttClient[]
 ): GanttRow[] {
   if (viewMode === 'by-crew') {
     return crewMembers.map(crew => {
@@ -162,40 +164,181 @@ export function assignmentsToRows(
       }
     })
   } else {
-    // Vessel-centric view: show vessel as header, then crew rows underneath
+    // Vessel-centric view with client grouping: Client > Vessel > Crew
     const rows: GanttRow[] = []
     
-    projects.forEach(project => {
-      const projectAssignments = assignments.filter(a => a.project_id === project.id)
+    if (clients && clients.length > 0) {
+      // Group by client
+      const clientMap = new Map<string, GanttClient>()
+      clients.forEach(client => clientMap.set(client.id, client))
       
-      // Only show vessels that have assignments
-      if (projectAssignments.length === 0) return
+      // Create a map of client ID to projects
+      const projectsByClient = new Map<string | null, GanttProject[]>()
+      projects.forEach(project => {
+        const clientId = project.client_id || null
+        const existing = projectsByClient.get(clientId) || []
+        existing.push(project)
+        projectsByClient.set(clientId, existing)
+      })
       
-      // Add vessel header row (no items, just a header)
+      // Process each client
+      Array.from(projectsByClient.entries()).forEach(([clientId, clientProjects]) => {
+        const hasAssignments = clientProjects.some(p => 
+          assignments.some(a => a.project_id === p.id)
+        )
+        
+        if (!hasAssignments) return
+        
+        // Add client header
+        if (clientId) {
+          const client = clientMap.get(clientId)
+          rows.push({
+            id: `client-header-${clientId}`,
+            label: client?.name || 'Unknown Client',
+            items: [],
+            isGroupHeader: true,
+            isClientHeader: true,
+            clientId: clientId,
+            color: '#6b7280', // Gray for client headers
+          })
+        } else {
+          // Unassigned group
+          rows.push({
+            id: 'client-header-unassigned',
+            label: 'Unassigned',
+            items: [],
+            isGroupHeader: true,
+            isClientHeader: true,
+            color: '#9ca3af', // Light gray
+          })
+        }
+        
+        // Add vessels and crew for this client
+        clientProjects.forEach(project => {
+          const projectAssignments = assignments.filter(a => a.project_id === project.id)
+          
+          if (projectAssignments.length === 0) return
+          
+          // Add vessel header row
+          rows.push({
+            id: `vessel-header-${project.id}`,
+            label: project.name,
+            color: project.color,
+            items: [],
+            isGroupHeader: true,
+            parentGroupId: clientId || 'unassigned',
+          })
+          
+          // Group assignments by crew member
+          const crewAssignmentsMap = new Map<string, GanttAssignment[]>()
+          projectAssignments.forEach(a => {
+            const existing = crewAssignmentsMap.get(a.crew_member_id) || []
+            existing.push(a)
+            crewAssignmentsMap.set(a.crew_member_id, existing)
+          })
+          
+          // Add crew rows
+          crewAssignmentsMap.forEach((crewAssignments, crewId) => {
+            const crewMember = crewAssignments[0].crew_member
+            rows.push({
+              id: `${project.id}-${crewId}`,
+              label: crewMember.full_name,
+              sublabel: crewAssignments[0].role_on_project || crewMember.role,
+              parentGroupId: project.id,
+              crewMemberId: crewId,
+              crewDetails: {
+                nationality: crewMember.nationality,
+                flag_state: crewMember.flag_state,
+                home_airport: crewMember.home_airport,
+                company: crewMember.company,
+              },
+              items: crewAssignments.map(a => ({
+                id: a.id,
+                rowId: `${project.id}-${crewId}`,
+                start: parseISO(a.start_date),
+                end: parseISO(a.end_date),
+                assignment: a,
+              })),
+            })
+          })
+        })
+      })
+    } else {
+      // Fallback: no client grouping (original behavior)
+      projects.forEach(project => {
+        const projectAssignments = assignments.filter(a => a.project_id === project.id)
+        
+        if (projectAssignments.length === 0) return
+        
+        rows.push({
+          id: `vessel-header-${project.id}`,
+          label: project.name,
+          color: project.color,
+          items: [],
+          isGroupHeader: true,
+        })
+        
+        const crewAssignmentsMap = new Map<string, GanttAssignment[]>()
+        projectAssignments.forEach(a => {
+          const existing = crewAssignmentsMap.get(a.crew_member_id) || []
+          existing.push(a)
+          crewAssignmentsMap.set(a.crew_member_id, existing)
+        })
+        
+        crewAssignmentsMap.forEach((crewAssignments, crewId) => {
+          const crewMember = crewAssignments[0].crew_member
+          rows.push({
+            id: `${project.id}-${crewId}`,
+            label: crewMember.full_name,
+            sublabel: crewAssignments[0].role_on_project || crewMember.role,
+            parentGroupId: project.id,
+            crewMemberId: crewId,
+            crewDetails: {
+              nationality: crewMember.nationality,
+              flag_state: crewMember.flag_state,
+              home_airport: crewMember.home_airport,
+              company: crewMember.company,
+            },
+            items: crewAssignments.map(a => ({
+              id: a.id,
+              rowId: `${project.id}-${crewId}`,
+              start: parseISO(a.start_date),
+              end: parseISO(a.end_date),
+              assignment: a,
+            })),
+          })
+        })
+      })
+    }
+    
+    // Add training assignments section
+    const trainingAssignments = assignments.filter(a => a.assignment_type === 'training' && !a.project_id)
+    if (trainingAssignments.length > 0) {
+      // Add training header
       rows.push({
-        id: `vessel-header-${project.id}`,
-        label: project.name,
-        color: project.color,
+        id: 'training-header',
+        label: 'Training',
         items: [],
         isGroupHeader: true,
+        isClientHeader: true,
+        color: '#f59e0b', // Orange for training
       })
       
-      // Group assignments by crew member for this vessel
-      const crewAssignmentsMap = new Map<string, GanttAssignment[]>()
-      projectAssignments.forEach(a => {
-        const existing = crewAssignmentsMap.get(a.crew_member_id) || []
+      // Group by crew member
+      const trainingByCrewMap = new Map<string, GanttAssignment[]>()
+      trainingAssignments.forEach(a => {
+        const existing = trainingByCrewMap.get(a.crew_member_id) || []
         existing.push(a)
-        crewAssignmentsMap.set(a.crew_member_id, existing)
+        trainingByCrewMap.set(a.crew_member_id, existing)
       })
       
-      // Add a row for each crew member on this vessel
-      crewAssignmentsMap.forEach((crewAssignments, crewId) => {
-        const crewMember = crewAssignments[0].crew_member
+      trainingByCrewMap.forEach((crewTraining, crewId) => {
+        const crewMember = crewTraining[0].crew_member
         rows.push({
-          id: `${project.id}-${crewId}`,
+          id: `training-${crewId}`,
           label: crewMember.full_name,
-          sublabel: crewAssignments[0].role_on_project || crewMember.role,
-          parentGroupId: project.id,
+          sublabel: crewMember.role,
+          parentGroupId: 'training',
           crewMemberId: crewId,
           crewDetails: {
             nationality: crewMember.nationality,
@@ -203,16 +346,16 @@ export function assignmentsToRows(
             home_airport: crewMember.home_airport,
             company: crewMember.company,
           },
-          items: crewAssignments.map(a => ({
+          items: crewTraining.map(a => ({
             id: a.id,
-            rowId: `${project.id}-${crewId}`,
+            rowId: `training-${crewId}`,
             start: parseISO(a.start_date),
             end: parseISO(a.end_date),
             assignment: a,
           })),
         })
       })
-    })
+    }
     
     return rows
   }

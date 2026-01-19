@@ -1,7 +1,16 @@
 import { createCrewMember } from '@/app/crew/actions'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import RoleSelect from '@/components/crew/RoleSelect'
 
-export default function NewCrewPage() {
+export default async function NewCrewPage() {
+  const supabase = await createClient()
+  
+  // Fetch all crew roles
+  const { data: roles } = await supabase
+    .from('crew_roles')
+    .select('id, name')
+    .order('display_order', { ascending: true })
   return (
     <div className="max-w-2xl mx-auto">
       <div className="md:flex md:items-center md:justify-between mb-6">
@@ -33,15 +42,11 @@ export default function NewCrewPage() {
             Role
           </label>
           <div className="mt-1">
-            <input
-              type="text"
-              name="role"
-              id="role"
-              required
-              placeholder="e.g. Captain, Engineer"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            />
+            <RoleSelect roles={roles || []} required />
           </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Can't find the role? Add it in <Link href="/settings" className="text-blue-600 hover:text-blue-700">Settings</Link>
+          </p>
         </div>
 
         <div>
@@ -92,23 +97,6 @@ export default function NewCrewPage() {
             </div>
 
             <div>
-              <label htmlFor="flag_state" className="block text-sm font-medium text-gray-700">
-                Flag State
-              </label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  name="flag_state"
-                  id="flag_state"
-                  maxLength={3}
-                  placeholder="e.g., TUV, LUX, GIB"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border uppercase"
-                />
-              </div>
-              <p className="mt-1 text-xs text-gray-500">3-letter country code</p>
-            </div>
-
-            <div>
               <label htmlFor="home_airport" className="block text-sm font-medium text-gray-700">
                 Home Airport
               </label>
@@ -118,21 +106,6 @@ export default function NewCrewPage() {
                   name="home_airport"
                   id="home_airport"
                   placeholder="e.g., WAW - Warsaw"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="company" className="block text-sm font-medium text-gray-700">
-                Company / Agency
-              </label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  name="company"
-                  id="company"
-                  placeholder="e.g., TOSN, SFX"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
               </div>

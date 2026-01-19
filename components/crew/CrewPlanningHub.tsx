@@ -30,10 +30,16 @@ interface CrewMember {
   phone?: string | null
 }
 
+interface CrewRole {
+  id: string
+  name: string
+}
+
 interface CrewPlanningHubProps {
   crewMember: CrewMember
   assignments: Assignment[]
   projects: Project[]
+  roles?: CrewRole[]
 }
 
 type AssignmentCategory = 'active' | 'upcoming' | 'past'
@@ -72,6 +78,7 @@ export default function CrewPlanningHub({
   crewMember,
   assignments,
   projects,
+  roles = [],
 }: CrewPlanningHubProps) {
   const router = useRouter()
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
@@ -96,17 +103,21 @@ export default function CrewPlanningHub({
   // Handle new assignment save
   const handleNewAssignmentSave = useCallback(
     async (data: {
-      projectId: string
+      projectId: string | null
       startDate: string
       endDate: string
       roleOnProject: string
+      assignmentType: 'vessel' | 'training'
+      trainingDescription?: string
     }) => {
       const result = await assignCrew(
         data.projectId,
         crewMember.id,
         data.startDate,
         data.endDate,
-        data.roleOnProject
+        data.roleOnProject,
+        data.assignmentType,
+        data.trainingDescription
       )
 
       if (result.error) {
@@ -301,6 +312,7 @@ export default function CrewPlanningHub({
         }}
         onSuccess={handleEditSuccess}
         otherAssignments={assignments}
+        roles={roles}
       />
 
       {/* New Assignment Modal */}
@@ -309,6 +321,7 @@ export default function CrewPlanningHub({
         crewMemberName={crewMember.full_name}
         crewMemberRole={crewMember.role}
         projects={projects}
+        roles={roles}
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
         onSave={handleNewAssignmentSave}

@@ -9,7 +9,7 @@
 'use client'
 
 import SearchInput from '@/components/ui/SearchInput'
-import FilterPills, { crewStatusOptions } from '@/components/ui/FilterPills'
+import { crewStatusOptions } from '@/components/ui/FilterPills'
 
 interface CrewFilterProps {
   /** Current search query */
@@ -56,6 +56,26 @@ export default function CrewFilter({
     onClearAll?.()
   }
   
+  const handleStatusSelect = (value: string) => {
+    if (!value && statusFilter) {
+      onStatusChange(statusFilter)
+      return
+    }
+    if (value) {
+      onStatusChange(value)
+    }
+  }
+
+  const handleRoleSelect = (value: string) => {
+    if (!value && roleFilter && onRoleChange) {
+      onRoleChange(roleFilter)
+      return
+    }
+    if (value && onRoleChange) {
+      onRoleChange(value)
+    }
+  }
+
   return (
     <div className="space-y-4 mb-6">
       {/* Search Input */}
@@ -66,27 +86,38 @@ export default function CrewFilter({
         shortcutHint="/"
       />
       
-      {/* Filter Pills */}
+      {/* Filter Dropdowns */}
       <div className="flex flex-wrap items-center gap-4">
-        {/* Status Filter */}
-        <FilterPills
-          label="Status"
-          options={crewStatusOptions}
-          value={statusFilter}
-          onChange={onStatusChange}
-        />
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+          <select
+            value={statusFilter || ''}
+            onChange={(e) => handleStatusSelect(e.target.value)}
+            className="min-w-[140px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+          >
+            <option value="">All</option>
+            {crewStatusOptions.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
         
-        {/* Role Filter (if roles available) */}
         {roles.length > 0 && onRoleChange && (
-          <FilterPills
-            label="Role"
-            options={roleOptions}
-            value={roleFilter || null}
-            onChange={onRoleChange}
-          />
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Role</label>
+            <select
+              value={roleFilter || ''}
+              onChange={(e) => handleRoleSelect(e.target.value)}
+              className="min-w-[160px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+            >
+              <option value="">All</option>
+              {roleOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
         )}
         
-        {/* Clear All */}
         {hasFilters && (
           <button
             onClick={handleClearAll}

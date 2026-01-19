@@ -29,23 +29,31 @@ interface CrewWithAssignments {
   status: string
   email: string | null
   phone: string | null
-  assignments: {
-    id: string
-    start_date: string
-    end_date: string
-    project: {
+    assignments: {
       id: string
-      name: string
-      color: string
-    }
-  }[]
+      start_date: string
+      end_date: string
+      assignment_type?: 'vessel' | 'training' | null
+      project: {
+        id: string
+        name: string
+        color: string
+      }
+    }[]
+  }
+
+
+interface CrewRole {
+  id: string
+  name: string
 }
 
 interface CrewListProps {
   crew: CrewWithAssignments[]
+  roles?: CrewRole[]
 }
 
-export default function CrewList({ crew }: CrewListProps) {
+export default function CrewList({ crew, roles = [] }: CrewListProps) {
   // Use URL-persisted filter state
   const {
     search,
@@ -74,11 +82,14 @@ export default function CrewList({ crew }: CrewListProps) {
   
   const today = new Date().toISOString().split('T')[0]
   
-  // Extract unique roles from crew data
+  // Extract unique roles from crew data (fallback if no predefined roles)
   const uniqueRoles = useMemo(() => {
-    const roles = new Set(crew.map(member => member.role))
-    return Array.from(roles).sort()
-  }, [crew])
+    if (roles.length > 0) {
+      return roles.map(role => role.name)
+    }
+    const roleSet = new Set(crew.map(member => member.role))
+    return Array.from(roleSet).sort()
+  }, [crew, roles])
   
   // Get active or upcoming assignment for a crew member
   const getActiveAssignment = useCallback((member: CrewWithAssignments) => {
@@ -210,6 +221,7 @@ export default function CrewList({ crew }: CrewListProps) {
                           <QuickCrewStatus
                             crewId={member.id}
                             currentStatus={member.status}
+                            assignments={member.assignments}
                           />
                           
                           <ArrowRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />

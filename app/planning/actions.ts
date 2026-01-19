@@ -93,13 +93,15 @@ export async function checkConflict(
   return { hasConflict: false }
 }
 
-// Assign crew to project with conflict detection
+// Assign crew to project or training with conflict detection
 export async function assignCrew(
-  projectId: string,
+  projectId: string | null,
   crewId: string,
   startDate: string,
   endDate: string,
-  roleOnProject?: string
+  roleOnProject?: string,
+  assignmentType?: 'vessel' | 'training',
+  trainingDescription?: string
 ) {
   const supabase = await createClient()
 
@@ -107,34 +109,50 @@ export async function assignCrew(
   const conflictCheck = await checkConflict(crewId, startDate, endDate)
 
   if (conflictCheck.hasConflict) {
-    const projectNames = conflictCheck.conflictingAssignments
-      ?.map(a => a.project.name)
+    const conflictNames = conflictCheck.conflictingAssignments
+      ?.map(a => a.project?.name || a.training_description || 'Unknown')
       .join(', ')
     return {
-      error: `Crew member already assigned to ${projectNames} during this period`
+      error: `Crew member already assigned to ${conflictNames} during this period`
     }
   }
 
   // Create assignment
-  const { error } = await supabase.from('assignments').insert({
-    project_id: projectId,
+  const insertData: any = {
     crew_member_id: crewId,
     start_date: startDate,
     end_date: endDate,
-    role_on_project: roleOnProject || null,
-  })
+    assignment_type: assignmentType || 'vessel',
+  }
+
+  if (assignmentType === 'training') {
+    insertData.project_id = null
+    insertData.training_description = trainingDescription || null
+    insertData.role_on_project = null
+  } else {
+    insertData.project_id = projectId
+    insertData.role_on_project = roleOnProject || null
+    insertData.training_description = null
+  }
+
+  const { error } = await supabase.from('assignments').insert(insertData)
 
   if (error) {
     console.error('Error assigning crew:', error)
     return { error: 'Failed to assign crew' }
   }
 
-  // Update crew status
-  await supabase.from('crew_members').update({ status: 'on_project' }).eq('id', crewId)
+  // Only update crew status to 'on_project' if assignment starts today or earlier
+  const today = new Date().toISOString().split('T')[0]
+  if (startDate <= today) {
+    await supabase.from('crew_members').update({ status: 'on_project' }).eq('id', crewId)
+  }
 
   revalidatePath('/planning')
   revalidatePath('/projects')
-  revalidatePath(`/projects/${projectId}`)
+  if (projectId) {
+    revalidatePath(`/projects/${projectId}`)
+  }
   return { success: true }
 }
 
@@ -145,6 +163,7 @@ export async function updateAssignment(
     startDate?: string
     endDate?: string
     roleOnProject?: string
+    trainingDescription?: string
   }
 ) {
   const supabase = await createClient()
@@ -185,6 +204,7 @@ export async function updateAssignment(
   if (data.startDate) updateData.start_date = data.startDate
   if (data.endDate) updateData.end_date = data.endDate
   if (data.roleOnProject !== undefined) updateData.role_on_project = data.roleOnProject || null
+  if (data.trainingDescription !== undefined) updateData.training_description = data.trainingDescription || null
 
   const { error } = await supabase
     .from('assignments')
@@ -230,16 +250,17 @@ export async function removeAssignment(assignmentId: string) {
     return { error: 'Failed to remove assignment' }
   }
 
-  // Check if crew has other active assignments
+  // Check if crew has other currently active assignments (started and not ended)
   const today = new Date().toISOString().split('T')[0]
-  const { data: remainingAssignments } = await supabase
+  const { data: activeAssignments } = await supabase
     .from('assignments')
     .select('id')
     .eq('crew_member_id', assignment.crew_member_id)
+    .lte('start_date', today)
     .gte('end_date', today)
 
-  // If no active assignments, set status to available
-  if (!remainingAssignments || remainingAssignments.length === 0) {
+  // If no currently active assignments, set status to available
+  if (!activeAssignments || activeAssignments.length === 0) {
     await supabase
       .from('crew_members')
       .update({ status: 'available' })

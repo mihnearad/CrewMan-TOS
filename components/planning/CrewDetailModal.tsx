@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { X, Mail, Phone, User, Flag, Plane, Building2, Globe, Calendar, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { computeCrewDisplayStatus, getCrewStatusDisplay } from '@/lib/utils'
 
 interface CrewMember {
   id: string
@@ -23,6 +24,7 @@ interface Assignment {
   start_date: string
   end_date: string
   role_on_project?: string
+  assignment_type?: 'vessel' | 'training' | null
   project: {
     id: string
     name: string
@@ -34,39 +36,6 @@ interface CrewDetailModalProps {
   crewMemberId: string
   isOpen: boolean
   onClose: () => void
-}
-
-function getStatusDisplay(status: string) {
-  switch (status) {
-    case 'available':
-      return {
-        label: 'Available',
-        bgClass: 'bg-green-100 dark:bg-green-900/50',
-        textClass: 'text-green-800 dark:text-green-400',
-        dotClass: 'bg-green-500',
-      }
-    case 'on_project':
-      return {
-        label: 'Onboard',
-        bgClass: 'bg-blue-100 dark:bg-blue-900/50',
-        textClass: 'text-blue-800 dark:text-blue-400',
-        dotClass: 'bg-blue-500',
-      }
-    case 'on_leave':
-      return {
-        label: 'On Leave',
-        bgClass: 'bg-yellow-100 dark:bg-yellow-900/50',
-        textClass: 'text-yellow-800 dark:text-yellow-400',
-        dotClass: 'bg-yellow-500',
-      }
-    default:
-      return {
-        label: status.replace('_', ' '),
-        bgClass: 'bg-gray-100 dark:bg-gray-700',
-        textClass: 'text-gray-800 dark:text-gray-300',
-        dotClass: 'bg-gray-500',
-      }
-  }
 }
 
 export default function CrewDetailModal({
@@ -106,7 +75,8 @@ export default function CrewDetailModal({
 
   if (!isOpen) return null
 
-  const statusDisplay = crewMember ? getStatusDisplay(crewMember.status) : null
+  const displayStatus = crewMember ? computeCrewDisplayStatus(crewMember.status, assignments) : null
+  const statusDisplay = displayStatus ? getCrewStatusDisplay(displayStatus, true) : null
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

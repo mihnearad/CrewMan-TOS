@@ -38,10 +38,16 @@ export default async function CrewPage() {
         id,
         start_date,
         end_date,
+        assignment_type,
         project:projects(id, name, color)
       )
     `)
     .order('full_name', { ascending: true })
+
+  const { data: roles } = await supabase
+    .from('crew_roles')
+    .select('id, name')
+    .order('display_order', { ascending: true })
 
   const crewWithAssignments = (crew as unknown as CrewWithAssignments[]) || []
 
@@ -74,7 +80,7 @@ export default async function CrewPage() {
           </div>
         </div>
       ) : (
-        <CrewList crew={crewWithAssignments} />
+        <CrewList crew={crewWithAssignments} roles={roles || []} />
       )}
     </div>
   )

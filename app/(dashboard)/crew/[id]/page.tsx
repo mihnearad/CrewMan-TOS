@@ -6,40 +6,7 @@ import { Pencil, ArrowLeft, Mail, Phone, User, Flag, Plane, Building2, Globe } f
 import CrewPlanningHub from '@/components/crew/CrewPlanningHub'
 import DeleteCrewButton from '@/components/crew/DeleteCrewButton'
 import type { Assignment } from '@/components/assignments'
-
-// Status display configuration
-function getStatusDisplay(status: string) {
-  switch (status) {
-    case 'available':
-      return {
-        label: 'Available',
-        bgClass: 'bg-green-100',
-        textClass: 'text-green-800',
-        dotClass: 'bg-green-500',
-      }
-    case 'on_project':
-      return {
-        label: 'Onboard',
-        bgClass: 'bg-blue-100',
-        textClass: 'text-blue-800',
-        dotClass: 'bg-blue-500',
-      }
-    case 'on_leave':
-      return {
-        label: 'On Leave',
-        bgClass: 'bg-yellow-100',
-        textClass: 'text-yellow-800',
-        dotClass: 'bg-yellow-500',
-      }
-    default:
-      return {
-        label: status.replace('_', ' '),
-        bgClass: 'bg-gray-100',
-        textClass: 'text-gray-800',
-        dotClass: 'bg-gray-500',
-      }
-  }
-}
+import { computeCrewDisplayStatus, getCrewStatusDisplay } from '@/lib/utils'
 
 export default async function CrewDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -60,6 +27,8 @@ export default async function CrewDetailPage({ params }: { params: Promise<{ id:
       start_date,
       end_date,
       role_on_project,
+      assignment_type,
+      training_description,
       project:projects(id, name, color, type, status)
     `)
     .eq('crew_member_id', id)
@@ -72,12 +41,26 @@ export default async function CrewDetailPage({ params }: { params: Promise<{ id:
     .eq('status', 'active')
     .order('name')
 
+  const { data: roles } = await supabase
+    .from('crew_roles')
+    .select('id, name')
+    .order('display_order', { ascending: true })
+
   async function handleDelete() {
     'use server'
     await deleteCrewMember(id)
   }
 
-  const statusDisplay = getStatusDisplay(crewMember.status)
+  // Compute display status based on assignments
+  const displayStatus = computeCrewDisplayStatus(
+    crewMember.status,
+    assignments?.map(a => ({ 
+      start_date: a.start_date, 
+      end_date: a.end_date,
+      assignment_type: a.assignment_type,
+    }))
+  )
+  const statusDisplay = getCrewStatusDisplay(displayStatus)
 
   // Transform assignments to match the Assignment type
   const typedAssignments: Assignment[] = (assignments || []).map((a: any) => ({
@@ -87,13 +70,15 @@ export default async function CrewDetailPage({ params }: { params: Promise<{ id:
     start_date: a.start_date,
     end_date: a.end_date,
     role_on_project: a.role_on_project,
-    project: {
+    assignment_type: a.assignment_type || 'vessel',
+    training_description: a.training_description,
+    project: a.project ? {
       id: a.project.id,
       name: a.project.name,
       color: a.project.color,
       type: a.project.type,
       status: a.project.status,
-    },
+    } : null,
   }))
 
   return (
@@ -234,6 +219,7 @@ export default async function CrewDetailPage({ params }: { params: Promise<{ id:
           crewMember={crewMember}
           assignments={typedAssignments}
           projects={projects || []}
+          roles={roles || []}
         />
       </div>
     </div>

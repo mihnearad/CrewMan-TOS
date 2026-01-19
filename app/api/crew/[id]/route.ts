@@ -30,6 +30,7 @@ export async function GET(
       start_date,
       end_date,
       role_on_project,
+      assignment_type,
       project:projects(id, name, color)
     `)
     .eq('crew_member_id', id)

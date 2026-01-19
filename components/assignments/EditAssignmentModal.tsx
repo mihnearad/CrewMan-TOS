@@ -20,6 +20,11 @@ interface ConflictInfo {
   }>
 }
 
+interface CrewRole {
+  id: string
+  name: string
+}
+
 interface EditAssignmentModalProps {
   assignment: Assignment | null
   isOpen: boolean
@@ -27,6 +32,7 @@ interface EditAssignmentModalProps {
   onSuccess?: () => void
   /** Other assignments for this crew member (for local conflict detection) */
   otherAssignments?: Assignment[]
+  roles?: CrewRole[]
 }
 
 /**
@@ -53,7 +59,12 @@ function checkLocalConflicts(
 
   return {
     hasConflict: conflicts.length > 0,
-    conflictingProjects: conflicts.map((a) => a.project.name),
+    conflictingProjects: conflicts.map((a) => {
+      if (a.assignment_type === 'training') {
+        return a.training_description || 'Training'
+      }
+      return a.project?.name || 'Unknown'
+    }),
   }
 }
 
@@ -69,6 +80,7 @@ export default function EditAssignmentModal({
   onClose,
   onSuccess,
   otherAssignments = [],
+  roles = [],
 }: EditAssignmentModalProps) {
   const [isPending, startTransition] = useTransition()
   const [isCheckingConflict, setIsCheckingConflict] = useState(false)
@@ -78,6 +90,7 @@ export default function EditAssignmentModal({
     startDate: '',
     endDate: '',
     roleOnProject: '',
+    trainingDescription: '',
   })
 
   // Reset form when assignment changes
@@ -87,6 +100,7 @@ export default function EditAssignmentModal({
         startDate: assignment.start_date,
         endDate: assignment.end_date,
         roleOnProject: assignment.role_on_project || '',
+        trainingDescription: (assignment as any).training_description || '',
       })
       setError(null)
       setServerConflict(null)
@@ -174,11 +188,20 @@ export default function EditAssignmentModal({
     }
 
     startTransition(async () => {
-      const result = await updateAssignment(assignment.id, {
+      const updateData: any = {
         startDate: formData.startDate,
         endDate: formData.endDate,
-        roleOnProject: formData.roleOnProject,
-      })
+      }
+      
+      // Check if this is a training assignment
+      const isTraining = (assignment as any).assignment_type === 'training'
+      if (isTraining) {
+        updateData.trainingDescription = formData.trainingDescription
+      } else {
+        updateData.roleOnProject = formData.roleOnProject
+      }
+
+      const result = await updateAssignment(assignment.id, updateData)
 
       if (result.error) {
         setError(result.error)
@@ -219,7 +242,8 @@ export default function EditAssignmentModal({
     return null
   }
 
-  const projectColor = assignment.project.color || '#6b7280'
+  const isTraining = (assignment as any).assignment_type === 'training'
+  const projectColor = isTraining ? '#f59e0b' : (assignment.project?.color || '#6b7280')
 
   return (
     <div
@@ -254,40 +278,67 @@ export default function EditAssignmentModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          {/* Vessel info (read-only) */}
+          {/* Vessel/Training info (read-only) */}
           <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Vessel
+              {isTraining ? 'Assignment Type' : 'Vessel'}
             </label>
             <div className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: projectColor }}
               />
-              <span className="truncate">{assignment.project.name}</span>
+              <span className="truncate">
+                {isTraining ? 'Training' : assignment.project?.name || 'Unknown'}
+              </span>
             </div>
           </div>
 
-          {/* Role onboard */}
-          <div className="mb-5">
-            <label
-              htmlFor="roleOnProject"
-              className="block text-sm font-medium text-gray-700 mb-1.5"
-            >
-              Role Onboard
-            </label>
-            <input
-              type="text"
-              id="roleOnProject"
-              value={formData.roleOnProject}
-              onChange={(e) =>
-                setFormData({ ...formData, roleOnProject: e.target.value })
-              }
-              placeholder="e.g., Lead Developer, Consultant"
-              disabled={isPending}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
-            />
-          </div>
+          {/* Role onboard OR Training description */}
+          {isTraining ? (
+            <div className="mb-5">
+              <label
+                htmlFor="trainingDescription"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+              >
+                Training Description
+              </label>
+              <input
+                type="text"
+                id="trainingDescription"
+                value={formData.trainingDescription}
+                onChange={(e) =>
+                  setFormData({ ...formData, trainingDescription: e.target.value })
+                }
+                placeholder="e.g., Safety Training, STCW Certification"
+                disabled={isPending}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+              />
+            </div>
+          ) : (
+            <div className="mb-5">
+              <label
+                htmlFor="roleOnProject"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+              >
+                Role Onboard
+              </label>
+              <select
+                id="roleOnProject"
+                value={formData.roleOnProject}
+                onChange={(e) =>
+                  setFormData({ ...formData, roleOnProject: e.target.value })
+                }
+                disabled={isPending}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+              >
+                <option value="">No specific role</option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.name}>{role.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Date range */}
           <div className="grid grid-cols-2 gap-4 mb-5">

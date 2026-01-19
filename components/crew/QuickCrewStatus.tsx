@@ -4,25 +4,43 @@ import { useState, useRef, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { updateCrewStatus } from '@/app/crew/actions'
 import { useToast } from '@/components/ui/ToastProvider'
+import { computeCrewDisplayStatus } from '@/lib/utils'
+
+interface Assignment {
+  start_date: string
+  end_date: string
+  assignment_type?: 'vessel' | 'training' | null
+}
 
 interface QuickCrewStatusProps {
   crewId: string
   currentStatus: string
+  assignments?: Assignment[]
 }
 
+// Selectable statuses (DB values only - 'planned' is computed, not stored)
 const statuses = [
   { value: 'available', label: 'Available', bgColor: 'bg-green-100', textColor: 'text-green-800' },
   { value: 'on_project', label: 'Onboard', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
   { value: 'on_leave', label: 'On Leave', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800' },
 ]
 
-export default function QuickCrewStatus({ crewId, currentStatus }: QuickCrewStatusProps) {
+// Display-only statuses (not stored in DB)
+const plannedStatus = { value: 'planned', label: 'Planned', bgColor: 'bg-purple-100', textColor: 'text-purple-800' }
+const trainingStatus = { value: 'training', label: 'Training', bgColor: 'bg-orange-100', textColor: 'text-orange-800' }
+
+export default function QuickCrewStatus({ crewId, currentStatus, assignments }: QuickCrewStatusProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { showToast } = useToast()
 
-  const currentStatusInfo = statuses.find(s => s.value === currentStatus) || statuses[0]
+  const displayStatus = computeCrewDisplayStatus(currentStatus, assignments)
+  const currentStatusInfo = displayStatus === 'planned'
+    ? plannedStatus
+    : displayStatus === 'training'
+      ? trainingStatus
+      : (statuses.find(s => s.value === displayStatus) || statuses[0])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

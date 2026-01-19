@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Anchor, Users, Calendar, Building2, UserCog } from 'lucide-react'
+import { LayoutDashboard, Anchor, Users, Calendar, Building2, UserCog, Settings } from 'lucide-react'
 import SearchTrigger from './search/SearchTrigger'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +23,7 @@ const navigation = [
   { name: 'Clients', href: '/clients', icon: Building2 },
   { name: 'Consultants', href: '/consultants', icon: UserCog },
   { name: 'Planning', href: '/planning', icon: Calendar },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export default function SidebarClient() {

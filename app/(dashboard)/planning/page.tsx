@@ -26,11 +26,25 @@ export default async function PlanningPage() {
     `)
     .order('start_date', { ascending: true })
 
+  // Fetch all crew roles
+  const { data: roles } = await supabase
+    .from('crew_roles')
+    .select('id, name')
+    .order('display_order', { ascending: true })
+
+  // Fetch all clients
+  const { data: clients } = await supabase
+    .from('clients')
+    .select('id, name')
+    .order('name')
+
   return (
     <PlanningBoard
       initialProjects={projects || []}
       initialCrew={crew || []}
       initialAssignments={assignments || []}
+      roles={roles || []}
+      clients={clients || []}
     />
   )
 }

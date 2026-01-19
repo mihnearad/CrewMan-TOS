@@ -17,7 +17,7 @@ import Link from 'next/link'
 import { Building2, Anchor } from 'lucide-react'
 import { useTableFilters, useFilterKeyboardShortcuts } from '@/lib/hooks/useSearchFilters'
 import SearchInput from '@/components/ui/SearchInput'
-import FilterPills, { entityStatusOptions } from '@/components/ui/FilterPills'
+import { entityStatusOptions } from '@/components/ui/FilterPills'
 
 interface ClientWithCount {
   id: string
@@ -81,12 +81,28 @@ export default function ClientsTable({ clients }: ClientsTableProps) {
         />
         
         <div className="flex flex-wrap items-center gap-4">
-          <FilterPills
-            label="Status"
-            options={entityStatusOptions}
-            value={status}
-            onChange={toggleStatus}
-          />
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+            <select
+              value={status || ''}
+              onChange={(e) => {
+                const value = e.target.value
+                if (!value && status) {
+                  toggleStatus(status)
+                  return
+                }
+                if (value) {
+                  toggleStatus(value)
+                }
+              }}
+              className="min-w-[140px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+            >
+              <option value="">All</option>
+              {entityStatusOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
           
           {hasFilters && (
             <button

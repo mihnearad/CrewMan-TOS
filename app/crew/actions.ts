@@ -12,24 +12,34 @@ export async function createCrewMember(formData: FormData) {
   const email = formData.get('email') as string
   const phone = formData.get('phone') as string
   const nationality = formData.get('nationality') as string
-  const flag_state = formData.get('flag_state') as string
   const home_airport = formData.get('home_airport') as string
-  const company = formData.get('company') as string
+
+  // Check for duplicate name (case-insensitive)
+  const { data: existing } = await supabase
+    .from('crew_members')
+    .select('id')
+    .ilike('full_name', full_name.trim())
+    .maybeSingle()
+
+  if (existing) {
+    redirect('/crew/new?error=A crew member with this name already exists')
+  }
 
   const { error } = await supabase.from('crew_members').insert({
-    full_name,
+    full_name: full_name.trim(),
     role,
     email: email || null,
     phone: phone || null,
     nationality: nationality || null,
-    flag_state: flag_state?.toUpperCase() || null,
     home_airport: home_airport || null,
-    company: company || null,
     status: 'available',
   })
 
   if (error) {
     console.error('Error creating crew member:', error)
+    if (error.code === '23505') { // Unique constraint violation
+      redirect('/crew/new?error=A crew member with this name already exists')
+    }
     redirect('/crew/new?error=Failed to create crew member')
   }
 
@@ -46,27 +56,26 @@ export async function updateCrewMember(id: string, formData: FormData) {
   const phone = formData.get('phone') as string
   const status = formData.get('status') as string
   const nationality = formData.get('nationality') as string
-  const flag_state = formData.get('flag_state') as string
   const home_airport = formData.get('home_airport') as string
-  const company = formData.get('company') as string
 
   const { error } = await supabase
     .from('crew_members')
     .update({
-      full_name,
+      full_name: full_name.trim(),
       role,
       email: email || null,
       phone: phone || null,
       nationality: nationality || null,
-      flag_state: flag_state?.toUpperCase() || null,
       home_airport: home_airport || null,
-      company: company || null,
       status,
     })
     .eq('id', id)
 
   if (error) {
     console.error('Error updating crew member:', error)
+    if (error.code === '23505') { // Unique constraint violation
+      redirect(`/crew/${id}/edit?error=A crew member with this name already exists`)
+    }
     redirect(`/crew/${id}/edit?error=Failed to update crew member`)
   }
 

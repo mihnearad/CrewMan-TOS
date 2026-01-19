@@ -192,7 +192,9 @@ export default function AssignmentTimeline({
             const position = getAssignmentPosition(assignment)
             if (!position) return null
 
-            const projectColor = assignment.project.color || '#6b7280'
+            const isTraining = assignment.assignment_type === 'training'
+            const projectColor = isTraining ? '#f59e0b' : (assignment.project?.color || '#6b7280')
+            const displayName = isTraining ? (assignment.training_description || 'Training') : (assignment.project?.name || 'Unknown')
             const status = getAssignmentStatus(assignment.start_date, assignment.end_date)
             const endingSoon = status === 'active' && isEndingSoon(assignment.end_date)
             const start = new Date(assignment.start_date)
@@ -241,7 +243,7 @@ export default function AssignmentTimeline({
                     backgroundColor: barStyles.backgroundColor,
                     opacity: barStyles.opacity,
                   }}
-                  title={`${assignment.project.name}\n${assignment.role_on_project || 'No role specified'}\n${format(start, 'MMM d, yyyy')} - ${format(end, 'MMM d, yyyy')}`}
+                  title={`${displayName}\n${assignment.role_on_project || 'No role specified'}\n${format(start, 'MMM d, yyyy')} - ${format(end, 'MMM d, yyyy')}`}
                 >
                   {/* Status icon */}
                   {status === 'active' && !endingSoon && (
@@ -258,7 +260,7 @@ export default function AssignmentTimeline({
                   )}
 
                   {/* Project name */}
-                  <span className="truncate">{assignment.project.name}</span>
+                  <span className="truncate">{displayName}</span>
 
                   {/* Active pulse indicator */}
                   {status === 'active' && !endingSoon && (
@@ -320,11 +322,13 @@ export function CompactAssignmentTimeline({
     )
   }
 
-  return (
+    return (
     <div className={cn('flex flex-wrap gap-1.5', className)}>
       {sortedAssignments.map((assignment) => {
         const status = getAssignmentStatus(assignment.start_date, assignment.end_date)
-        const projectColor = assignment.project.color || '#6b7280'
+        const isTraining = assignment.assignment_type === 'training'
+        const projectColor = isTraining ? '#f59e0b' : (assignment.project?.color || '#6b7280')
+        const displayName = isTraining ? (assignment.training_description || 'Training') : (assignment.project?.name || 'Unknown')
         const endingSoon = status === 'active' && isEndingSoon(assignment.end_date)
 
         return (
@@ -344,7 +348,7 @@ export function CompactAssignmentTimeline({
               backgroundColor: status === 'past' ? '#e5e7eb' : projectColor + '20',
               color: status === 'past' ? '#6b7280' : projectColor,
             }}
-            title={`${assignment.project.name}: ${format(new Date(assignment.start_date), 'MMM d')} - ${format(new Date(assignment.end_date), 'MMM d, yyyy')}`}
+            title={`${displayName}: ${format(new Date(assignment.start_date), 'MMM d')} - ${format(new Date(assignment.end_date), 'MMM d, yyyy')}`}
           >
             {status === 'active' && !endingSoon && (
               <CheckCircle className="h-3 w-3" />
@@ -354,7 +358,7 @@ export function CompactAssignmentTimeline({
             )}
             {status === 'upcoming' && <Clock className="h-3 w-3" />}
             {status === 'past' && <CheckCircle className="h-3 w-3 opacity-60" />}
-            <span className="truncate max-w-[100px]">{assignment.project.name}</span>
+            <span className="truncate max-w-[100px]">{displayName}</span>
           </button>
         )
       })}

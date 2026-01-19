@@ -19,18 +19,20 @@ import { removeAssignment } from '@/app/planning/actions'
 
 export interface Assignment {
   id: string
-  project_id: string
+  project_id: string | null
   crew_member_id: string
   start_date: string
   end_date: string
   role_on_project: string | null
+  assignment_type?: 'vessel' | 'training'
+  training_description?: string | null
   project: {
     id: string
     name: string
     color: string
     type?: string
     status?: string
-  }
+  } | null
   crew_member?: {
     id: string
     full_name: string
@@ -142,7 +144,9 @@ export default function AssignmentCard({
 
   const statusConfig = getStatusConfig(status)
   const StatusIcon = statusConfig.icon
-  const projectColor = assignment.project.color || '#6b7280'
+  const isTraining = assignment.assignment_type === 'training'
+  const projectColor = isTraining ? '#f59e0b' : (assignment.project?.color || '#6b7280')
+  const displayName = isTraining ? (assignment.training_description || 'Training') : (assignment.project?.name || 'Unknown')
 
   // Calculate days remaining or days since completion
   const daysInfo = useMemo(() => {
@@ -222,21 +226,25 @@ export default function AssignmentCard({
             {displayMode === 'crew-view' ? (
               <>
                 <div className="flex items-center gap-2 mb-1">
-                  {showLink ? (
+                  {isTraining ? (
+                    <h3 className="font-semibold text-orange-600 truncate">
+                      {displayName}
+                    </h3>
+                  ) : showLink && assignment.project_id ? (
                     <Link
                       href={`/projects/${assignment.project_id}`}
                       className="font-semibold text-gray-900 hover:text-blue-600 transition-colors flex items-center gap-1 truncate"
                     >
-                      {assignment.project.name}
+                      {displayName}
                       <ExternalLink className="h-3 w-3 flex-shrink-0" />
                     </Link>
                   ) : (
                     <h3 className="font-semibold text-gray-900 truncate">
-                      {assignment.project.name}
+                      {displayName}
                     </h3>
                   )}
                 </div>
-                {assignment.role_on_project && (
+                {!isTraining && assignment.role_on_project && (
                   <p className="text-sm text-gray-600 flex items-center gap-1.5">
                     <Briefcase className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
                     <span className="truncate">{assignment.role_on_project}</span>

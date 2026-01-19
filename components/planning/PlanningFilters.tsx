@@ -15,9 +15,9 @@
 
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
-import { Filter, ChevronDown, ChevronUp, X, AlertTriangle } from 'lucide-react'
-import { addDays, format } from 'date-fns'
+import { useCallback, useMemo } from 'react'
+import { Filter, X, AlertTriangle } from 'lucide-react'
+import { format } from 'date-fns'
 import DateRangePicker from '@/components/ui/DateRangePicker'
 import { cn } from '@/lib/utils'
 
@@ -34,11 +34,18 @@ interface CrewMember {
   role: string
 }
 
+interface Role {
+  id: string
+  name: string
+}
+
 interface PlanningFiltersProps {
   /** Available projects to filter by */
   projects: Project[]
   /** Available crew members to filter by */
   crewMembers: CrewMember[]
+  /** Available roles to filter by */
+  roles?: Role[]
   /** Selected project IDs */
   selectedProjects: string[]
   /** Callback when project selection changes */
@@ -47,6 +54,10 @@ interface PlanningFiltersProps {
   selectedCrew: string[]
   /** Callback when crew selection changes */
   onCrewToggle: (crewId: string) => void
+  /** Selected role names */
+  selectedRoles?: string[]
+  /** Callback when role selection changes */
+  onRoleToggle?: (roleName: string) => void
   /** Date range "from" value */
   dateFrom: string | null
   /** Date range "to" value */
@@ -68,10 +79,13 @@ interface PlanningFiltersProps {
 export default function PlanningFilters({
   projects,
   crewMembers,
+  roles = [],
   selectedProjects,
   onProjectToggle,
   selectedCrew,
   onCrewToggle,
+  selectedRoles = [],
+  onRoleToggle,
   dateFrom,
   dateTo,
   onDateFromChange,
@@ -81,17 +95,16 @@ export default function PlanningFilters({
   onEndingSoonToggle,
   onClearAll,
 }: PlanningFiltersProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  
   // Calculate active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0
     if (selectedProjects.length > 0) count++
     if (selectedCrew.length > 0) count++
+    if (selectedRoles.length > 0) count++
     if (dateFrom || dateTo) count++
     if (endingSoon) count++
     return count
-  }, [selectedProjects, selectedCrew, dateFrom, dateTo, endingSoon])
+  }, [selectedProjects, selectedCrew, selectedRoles, dateFrom, dateTo, endingSoon])
   
   const hasFilters = activeFilterCount > 0
   
@@ -105,10 +118,7 @@ export default function PlanningFilters({
     <div className="bg-white rounded-lg border border-gray-200 mb-4 dark:bg-gray-900 dark:border-gray-700">
       {/* Filter Header (always visible) */}
       <div className="flex items-center justify-between px-4 py-3">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-        >
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           <Filter className="h-4 w-4" />
           Filters
           {hasFilters && (
@@ -116,12 +126,7 @@ export default function PlanningFilters({
               {activeFilterCount}
             </span>
           )}
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-          )}
-        </button>
+        </div>
         
         <div className="flex items-center gap-2">
           {/* Quick filter: Ending Soon */}
@@ -151,80 +156,34 @@ export default function PlanningFilters({
         </div>
       </div>
       
-      {/* Active filter summary (when collapsed) */}
-      {!isExpanded && hasFilters && (
-        <div className="px-4 pb-3 flex flex-wrap gap-2">
-          {selectedProjects.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded dark:bg-gray-800 dark:text-gray-300">
-              {selectedProjects.length} vessel{selectedProjects.length > 1 ? 's' : ''}
-              <button onClick={() => selectedProjects.forEach(id => onProjectToggle(id))} className="hover:text-gray-900 dark:hover:text-white">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-          {selectedCrew.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded dark:bg-gray-800 dark:text-gray-300">
-              {selectedCrew.length} crew
-              <button onClick={() => selectedCrew.forEach(id => onCrewToggle(id))} className="hover:text-gray-900 dark:hover:text-white">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-          {(dateFrom || dateTo) && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded dark:bg-gray-800 dark:text-gray-300">
-              {dateFrom && dateTo 
-                ? `${format(new Date(dateFrom), 'MMM d')} - ${format(new Date(dateTo), 'MMM d')}`
-                : dateFrom 
-                  ? `From ${format(new Date(dateFrom), 'MMM d')}`
-                  : `Until ${format(new Date(dateTo!), 'MMM d')}`
-              }
-              <button onClick={onDateClear} className="hover:text-gray-900 dark:hover:text-white">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-        </div>
-      )}
-      
-      {/* Expanded filter options */}
-      {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4 dark:border-gray-700">
+      <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4 dark:border-gray-700">
           {/* Vessel Filter */}
           <div>
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block dark:text-gray-400">
               Vessels
             </label>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              {activeProjects.map(project => {
-                const isSelected = selectedProjects.includes(project.id)
-                return (
-                  <button
-                    key={project.id}
-                    onClick={() => onProjectToggle(project.id)}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border transition-all',
-                      isSelected
-                        ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-900'
-                        : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500 dark:text-gray-300'
-                    )}
-                    style={isSelected ? {
-                      backgroundColor: `${project.color}20`,
-                      borderColor: project.color,
-                      color: project.color,
-                    } : undefined}
-                  >
-                    <div 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: project.color }}
-                    />
-                    {project.name}
-                  </button>
-                )
-              })}
-              {activeProjects.length === 0 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">No active vessels</p>
-              )}
-            </div>
+            <select
+              value={selectedProjects[0] || ''}
+              onChange={(e) => {
+                const value = e.target.value
+                if (!value) {
+                  selectedProjects.forEach(id => onProjectToggle(id))
+                  return
+                }
+                selectedProjects.forEach(id => {
+                  if (id !== value) onProjectToggle(id)
+                })
+                if (!selectedProjects.includes(value)) {
+                  onProjectToggle(value)
+                }
+              }}
+              className="w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+            >
+              <option value="">All vessels</option>
+              {activeProjects.map(project => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
           </div>
           
           {/* Crew Filter */}
@@ -232,34 +191,60 @@ export default function PlanningFilters({
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block dark:text-gray-400">
               Crew Members
             </label>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              {crewMembers.map(crew => {
-                const isSelected = selectedCrew.includes(crew.id)
-                return (
-                  <button
-                    key={crew.id}
-                    onClick={() => onCrewToggle(crew.id)}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border transition-all',
-                      isSelected
-                        ? 'bg-blue-100 text-blue-800 border-blue-200 ring-2 ring-offset-1 ring-blue-500 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700 dark:ring-offset-gray-900'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
-                    )}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                      {crew.full_name.charAt(0)}
-                    </div>
-                    {crew.full_name}
-                    <span className="text-gray-400 dark:text-gray-500">·</span>
-                    <span className={isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}>{crew.role}</span>
-                  </button>
-                )
-              })}
-              {crewMembers.length === 0 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">No crew members</p>
-              )}
-            </div>
+            <select
+              value={selectedCrew[0] || ''}
+              onChange={(e) => {
+                const value = e.target.value
+                if (!value) {
+                  selectedCrew.forEach(id => onCrewToggle(id))
+                  return
+                }
+                selectedCrew.forEach(id => {
+                  if (id !== value) onCrewToggle(id)
+                })
+                if (!selectedCrew.includes(value)) {
+                  onCrewToggle(value)
+                }
+              }}
+              className="w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+            >
+              <option value="">All crew</option>
+              {crewMembers.map(crew => (
+                <option key={crew.id} value={crew.id}>{crew.full_name} · {crew.role}</option>
+              ))}
+            </select>
           </div>
+          
+          {/* Role Filter */}
+          {roles.length > 0 && onRoleToggle && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block dark:text-gray-400">
+                Roles
+              </label>
+              <select
+                value={selectedRoles[0] || ''}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (!value) {
+                    selectedRoles.forEach(name => onRoleToggle(name))
+                    return
+                  }
+                  selectedRoles.forEach(name => {
+                    if (name !== value) onRoleToggle(name)
+                  })
+                  if (!selectedRoles.includes(value)) {
+                    onRoleToggle(value)
+                  }
+                }}
+                className="w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+              >
+                <option value="">All roles</option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.name}>{role.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           
           {/* Date Range Filter */}
           <DateRangePicker
@@ -272,7 +257,6 @@ export default function PlanningFilters({
             showPresets
           />
         </div>
-      )}
     </div>
   )
 }

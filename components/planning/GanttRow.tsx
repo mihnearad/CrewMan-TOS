@@ -2,7 +2,7 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { isToday, isSameWeek, isSameMonth } from 'date-fns'
-import type { GanttRow as GanttRowType, GanttViewMode, GanttTimeRange, GanttZoomLevel } from '@/lib/gantt/types'
+import type { GanttRow as GanttRowType, GanttViewMode, GanttTimeRange, GanttZoomLevel, GanttItem as GanttItemType } from '@/lib/gantt/types'
 import { getTimeScaleColumns, getPixelsPerUnit } from '@/lib/gantt/utils'
 import GanttItem from './GanttItem'
 
@@ -15,6 +15,7 @@ interface GanttRowProps {
   conflictingItems?: Set<string>
   onResizeStart?: (itemId: string, edge: 'start' | 'end') => void
   onResizeEnd?: () => void
+  onItemClick?: (item: GanttItemType) => void
 }
 
 export default function GanttRow({
@@ -26,6 +27,7 @@ export default function GanttRow({
   conflictingItems = new Set(),
   onResizeStart,
   onResizeEnd,
+  onItemClick,
 }: GanttRowProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `row-${row.id}`,
@@ -118,6 +120,7 @@ export default function GanttRow({
           hasConflict={conflictingItems.has(item.id)}
           onResizeStart={onResizeStart}
           onResizeEnd={onResizeEnd}
+          onClick={onItemClick}
         />
       ))}
     </div>

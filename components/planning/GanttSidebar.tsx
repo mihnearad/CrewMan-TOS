@@ -1,6 +1,6 @@
 'use client'
 
-import { Anchor } from 'lucide-react'
+import { Anchor, Building2, GraduationCap } from 'lucide-react'
 import type { GanttRow } from '@/lib/gantt/types'
 
 interface GanttSidebarProps {
@@ -35,7 +35,35 @@ export default function GanttSidebar({
       style={{ width }}
     >
       {rows.map((row) => {
-        // Vessel header row styling
+        // Client header row styling (top level)
+        if (row.isGroupHeader && row.isClientHeader) {
+          const icon = row.id.startsWith('training') ? (
+            <GraduationCap className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: row.color || '#f59e0b' }} />
+          ) : (
+            <Building2 className="w-4 h-4 mr-2 flex-shrink-0" style={{ color: row.color || '#6b7280' }} />
+          )
+          
+          return (
+            <div
+              key={row.id}
+              className="px-2.5 flex items-center bg-gray-100 dark:bg-gray-800 border-b-2 border-gray-300 dark:border-gray-600"
+              style={{ 
+                height: rowHeight,
+              }}
+            >
+              {icon}
+              <div className="min-w-0 flex-1">
+                <div 
+                  className="text-xs font-bold truncate tracking-wider uppercase text-gray-700 dark:text-gray-200"
+                >
+                  {row.label}
+                </div>
+              </div>
+            </div>
+          )
+        }
+        
+        // Vessel header row styling (under client)
         if (row.isGroupHeader) {
           return (
             <div
@@ -44,6 +72,7 @@ export default function GanttSidebar({
               style={{ 
                 height: rowHeight,
                 backgroundColor: row.color ? `${row.color}12` : undefined,
+                paddingLeft: '1.5rem', // Extra indent for vessels under clients
               }}
             >
               <Anchor 
@@ -97,21 +126,13 @@ export default function GanttSidebar({
             </div>
             
             {/* Position/Role - fixed width */}
-            <div className="w-[70px] truncate text-gray-600 dark:text-gray-400 text-center" title={row.sublabel}>
+            <div className="w-[90px] truncate text-gray-600 dark:text-gray-400 text-center" title={row.sublabel}>
               {row.sublabel || '-'}
-            </div>
-            
-            {/* Flag State - fixed width */}
-            <div 
-              className="w-[32px] text-center text-gray-500 dark:text-gray-500 font-mono text-[10px]"
-              title={row.crewDetails?.flag_state ? `Flag: ${row.crewDetails.flag_state}` : undefined}
-            >
-              {row.crewDetails?.flag_state || '-'}
             </div>
             
             {/* Airport code - fixed width */}
             <div 
-              className="w-[32px] text-gray-500 dark:text-gray-500 text-center font-mono text-[10px]"
+              className="w-[48px] text-gray-500 dark:text-gray-500 text-center font-mono text-[10px]"
               title={row.crewDetails?.home_airport || undefined}
             >
               {getAirportCode(row.crewDetails?.home_airport)}

@@ -1,15 +1,18 @@
 export interface GanttAssignment {
   id: string
-  project_id: string
+  project_id: string | null
   crew_member_id: string
   start_date: string
   end_date: string
   role_on_project: string | null
+  assignment_type?: 'vessel' | 'training'
+  training_description?: string | null
   project: {
     id: string
     name: string
     color: string
-  }
+    client_id?: string | null
+  } | null
   crew_member: {
     id: string
     full_name: string
@@ -27,6 +30,12 @@ export interface GanttProject {
   type: string
   status: string
   color: string
+  client_id?: string | null
+}
+
+export interface GanttClient {
+  id: string
+  name: string
 }
 
 export interface GanttCrewMember {
@@ -54,12 +63,16 @@ export interface GanttRow {
   sublabel?: string
   color?: string
   items: GanttItem[]
-  /** Whether this row is a group header (vessel header in vessel view) */
+  /** Whether this row is a group header (client or vessel header) */
   isGroupHeader?: boolean
-  /** Parent group ID (vessel ID for crew rows in vessel view) */
+  /** Whether this is a client header (top level) */
+  isClientHeader?: boolean
+  /** Parent group ID (client ID for vessel rows, vessel ID for crew rows) */
   parentGroupId?: string
   /** Crew member ID for linking to crew profile */
   crewMemberId?: string
+  /** Client ID for client headers */
+  clientId?: string
   /** Additional crew details for display in sidebar */
   crewDetails?: {
     nationality?: string

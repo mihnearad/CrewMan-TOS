@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { GanttItem as GanttItemType, GanttViewMode, GanttTimeRange, GanttZoomLevel } from '@/lib/gantt/types'
@@ -14,6 +15,7 @@ interface GanttItemProps {
   isResizing?: 'start' | 'end' | null
   onResizeStart?: (itemId: string, edge: 'start' | 'end') => void
   onResizeEnd?: () => void
+  onClick?: (item: GanttItemType) => void
 }
 
 export default function GanttItem({
@@ -25,21 +27,33 @@ export default function GanttItem({
   isResizing,
   onResizeStart,
   onResizeEnd,
+  onClick,
 }: GanttItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: { item },
   })
 
-  const { left, width } = getItemPosition(item.start, item.end, timeRange, zoomLevel)
-  const project = item.assignment.project
-  const crewMember = item.assignment.crew_member
+  const mouseDownTime = React.useRef<number>(0)
 
-  // Display different info based on view mode
-  // In vessel view, show the date range since crew member name is in sidebar
-  // In crew view, show the vessel name since crew member name is in sidebar
-  const primaryText = viewMode === 'by-crew' ? project.name : formatDateRange(item.start, item.end)
-  const color = project.color
+  const { left, width } = getItemPosition(item.start, item.end, timeRange, zoomLevel)
+  const assignment = item.assignment
+  const isTraining = assignment.assignment_type === 'training'
+  const project = assignment.project
+  const crewMember = assignment.crew_member
+
+  // Display different info based on view mode and assignment type
+  let primaryText: string
+  if (isTraining) {
+    primaryText = assignment.training_description || 'Training'
+  } else if (viewMode === 'by-crew') {
+    primaryText = project?.name || 'Unknown'
+  } else {
+    primaryText = formatDateRange(item.start, item.end)
+  }
+  
+  // Training gets orange color, vessels get their project color
+  const color = isTraining ? '#f59e0b' : (project?.color || '#3b82f6')
 
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -49,11 +63,12 @@ export default function GanttItem({
     backgroundColor: hasConflict ? '#fecaca' : color + 'f0', // Nearly opaque (f0 = 94% opacity)
     borderLeft: `3px solid ${hasConflict ? '#ef4444' : color}`,
     opacity: isDragging ? 0.9 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab',
+    cursor: isDragging ? 'grabbing' : 'pointer',
     zIndex: isDragging ? 100 : 1,
   }
 
-  const handleMouseDown = (e: React.MouseEvent, edge: 'start' | 'end') => {
+  // Handle resize edge mouse down
+  const handleResizeMouseDown = (e: React.MouseEvent, edge: 'start' | 'end') => {
     e.stopPropagation()
     e.preventDefault()
     onResizeStart?.(item.id, edge)
@@ -66,18 +81,35 @@ export default function GanttItem({
         isDragging ? 'shadow-lg scale-[1.02]' : 'hover:shadow-md hover:brightness-105'
       } ${hasConflict ? 'ring-2 ring-red-400 ring-offset-1' : ''}`}
       style={style}
-      title={`${crewMember.full_name} - ${project.name}\n${formatDateRange(item.start, item.end)}`}
+      title={isTraining 
+        ? `${crewMember.full_name} - Training: ${assignment.training_description || 'Training'}\n${formatDateRange(item.start, item.end)}`
+        : `${crewMember.full_name} - ${project?.name || 'Unknown'}\n${formatDateRange(item.start, item.end)}`
+      }
       {...listeners}
       {...attributes}
     >
       {/* Left resize handle */}
       <div
         className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30 dark:hover:bg-gray-300/30"
-        onMouseDown={(e) => handleMouseDown(e, 'start')}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'start')}
       />
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 truncate">
+      {/* Clickable content area */}
+      <div 
+        className="flex-1 min-w-0 truncate cursor-pointer"
+        onMouseDown={(e) => {
+          mouseDownTime.current = Date.now()
+        }}
+        onMouseUp={(e) => {
+          const duration = Date.now() - mouseDownTime.current
+          // If mouse was down for less than 200ms, consider it a click (not a drag)
+          if (duration < 200 && onClick && !isDragging) {
+            e.stopPropagation()
+            e.preventDefault()
+            onClick(item)
+          }
+        }}
+      >
         <span className="font-semibold text-white drop-shadow-sm">
           {primaryText}
         </span>
@@ -86,7 +118,7 @@ export default function GanttItem({
       {/* Right resize handle */}
       <div
         className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30 dark:hover:bg-gray-300/30"
-        onMouseDown={(e) => handleMouseDown(e, 'end')}
+        onMouseDown={(e) => handleResizeMouseDown(e, 'end')}
       />
 
       {/* Conflict indicator */}

@@ -12,7 +12,7 @@
 'use client'
 
 import SearchInput from '@/components/ui/SearchInput'
-import FilterPills, { projectStatusOptions, projectTypeOptions } from '@/components/ui/FilterPills'
+import { projectStatusOptions, projectTypeOptions } from '@/components/ui/FilterPills'
 import DateRangePicker from '@/components/ui/DateRangePicker'
 
 interface ProjectsFilterProps {
@@ -71,6 +71,26 @@ export default function ProjectsFilter({
     onClearAll?.()
   }
   
+  const handleStatusSelect = (value: string) => {
+    if (!value && statusFilter) {
+      onStatusChange(statusFilter)
+      return
+    }
+    if (value) {
+      onStatusChange(value)
+    }
+  }
+
+  const handleTypeSelect = (value: string) => {
+    if (!value && typeFilter) {
+      onTypeChange(typeFilter)
+      return
+    }
+    if (value) {
+      onTypeChange(value)
+    }
+  }
+
   return (
     <div className="space-y-4 mb-6">
       {/* Search Input */}
@@ -81,25 +101,36 @@ export default function ProjectsFilter({
         shortcutHint="/"
       />
       
-      {/* Filter Pills Row */}
+      {/* Filter Dropdowns Row */}
       <div className="flex flex-wrap gap-4 items-start">
-        {/* Status Filter */}
-        <FilterPills
-          label="Status"
-          options={projectStatusOptions}
-          value={statusFilter}
-          onChange={onStatusChange}
-        />
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+          <select
+            value={statusFilter || ''}
+            onChange={(e) => handleStatusSelect(e.target.value)}
+            className="min-w-[140px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+          >
+            <option value="">All</option>
+            {projectStatusOptions.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
         
-        {/* Type Filter */}
-        <FilterPills
-          label="Type"
-          options={projectTypeOptions}
-          value={typeFilter}
-          onChange={onTypeChange}
-        />
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</label>
+          <select
+            value={typeFilter || ''}
+            onChange={(e) => handleTypeSelect(e.target.value)}
+            className="min-w-[140px] rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+          >
+            <option value="">All</option>
+            {projectTypeOptions.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
         
-        {/* Date Range Filter (compact dropdown) */}
         {showDateFilter && onDateFromChange && onDateToChange && onDateClear && (
           <DateRangePicker
             from={dateFrom || null}
@@ -112,7 +143,6 @@ export default function ProjectsFilter({
           />
         )}
         
-        {/* Clear All */}
         {hasFilters && (
           <button
             onClick={handleClearAll}

@@ -27,22 +27,37 @@ import GanttHeader from './GanttHeader'
 import GanttSidebar from './GanttSidebar'
 import GanttRow from './GanttRow'
 import CrewDetailModal from './CrewDetailModal'
+import EditAssignmentModal from '@/components/assignments/EditAssignmentModal'
+
+interface GanttClient {
+  id: string
+  name: string
+}
+
+interface CrewRole {
+  id: string
+  name: string
+}
 
 interface GanttViewProps {
   assignments: GanttAssignment[]
   projects: GanttProject[]
   crewMembers: GanttCrewMember[]
+  clients?: GanttClient[]
+  roles?: CrewRole[]
   filterProjectId?: string
 }
 
 const ROW_HEIGHT = 32
 const HEADER_HEIGHT = 36
-const SIDEBAR_WIDTH = 340
+const SIDEBAR_WIDTH = 420
 
 export default function GanttView({
   assignments,
   projects,
   crewMembers,
+  clients = [],
+  roles = [],
   filterProjectId,
 }: GanttViewProps) {
   const [viewMode, setViewMode] = useState<GanttViewMode>('by-project')
@@ -53,6 +68,7 @@ export default function GanttView({
   const [conflictingItems, setConflictingItems] = useState<Set<string>>(new Set())
   const [isUpdating, setIsUpdating] = useState(false)
   const [selectedCrewMemberId, setSelectedCrewMemberId] = useState<string | null>(null)
+  const [editingAssignment, setEditingAssignment] = useState<GanttItem | null>(null)
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -77,8 +93,8 @@ export default function GanttView({
 
   // Convert to rows based on view mode
   const rows = useMemo(
-    () => assignmentsToRows(filteredAssignments, filteredProjects, filteredCrew, viewMode),
-    [filteredAssignments, filteredProjects, filteredCrew, viewMode]
+    () => assignmentsToRows(filteredAssignments, filteredProjects, filteredCrew, viewMode, clients),
+    [filteredAssignments, filteredProjects, filteredCrew, viewMode, clients]
   )
 
   const timelineWidth = useMemo(
@@ -193,6 +209,14 @@ export default function GanttView({
     setTimeRange(navigateTimeRange(timeRange, direction, zoomLevel))
   }
 
+  const handleItemClick = useCallback((item: GanttItem) => {
+    setEditingAssignment(item)
+  }, [])
+
+  const handleEditSuccess = useCallback(() => {
+    window.location.reload()
+  }, [])
+
   return (
     <div className="bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden border border-slate-200/60 dark:border-gray-700">
       <GanttControls
@@ -226,25 +250,22 @@ export default function GanttView({
             <div className="flex sticky top-0 z-10">
               {/* Sidebar header with column labels */}
               <div 
-                className="flex-shrink-0 sticky left-0 z-20 flex items-center px-2.5 gap-1 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-850 border-b border-slate-200/60 dark:border-gray-700 border-r border-r-slate-200/40 dark:border-r-gray-700"
+                className="flex-shrink-0 sticky left-0 z-20 flex items-center px-2.5 gap-1 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-850 border-b border-slate-200/60 dark:border-gray-700 border-r-2 border-r-slate-300 dark:border-r-gray-600"
                 style={{ 
                   width: SIDEBAR_WIDTH, 
                   height: HEADER_HEIGHT,
-                  boxShadow: '2px 0 8px -4px rgba(0,0,0,0.06)',
+                  boxShadow: '2px 0 8px -2px rgba(0,0,0,0.1)',
                 }}
               >
                 <div className="w-2 flex-shrink-0" /> {/* Indent spacer */}
                 <div className="flex-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Name
                 </div>
-                <div className="w-[70px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
+                <div className="w-[80px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
                   Position
                 </div>
-                <div className="w-[32px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
-                  Flag
-                </div>
-                <div className="w-[32px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
-                  Apt
+                <div className="w-[40px] text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">
+                  Airport
                 </div>
               </div>
               {/* Timeline header - scrolls horizontally with content */}
@@ -259,12 +280,12 @@ export default function GanttView({
 
             {/* Body Row */}
             <div className="flex">
-              {/* Sidebar - sticky left with subtle shadow separator */}
+              {/* Sidebar - sticky left with clear border separator */}
               <div 
-                className="flex-shrink-0 sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-slate-200/40 dark:border-gray-700"
+                className="flex-shrink-0 sticky left-0 z-10 bg-white dark:bg-gray-900 border-r-2 border-r-slate-300 dark:border-r-gray-600"
                 style={{ 
                   width: SIDEBAR_WIDTH,
-                  boxShadow: '2px 0 8px -4px rgba(0,0,0,0.06)',
+                  boxShadow: '2px 0 8px -2px rgba(0,0,0,0.1)',
                 }}
               >
                 <GanttSidebar
@@ -291,6 +312,7 @@ export default function GanttView({
                       zoomLevel={zoomLevel}
                       rowHeight={ROW_HEIGHT}
                       conflictingItems={conflictingItems}
+                      onItemClick={handleItemClick}
                     />
                   ))
                 )}
@@ -315,6 +337,15 @@ export default function GanttView({
         crewMemberId={selectedCrewMemberId || ''}
         isOpen={!!selectedCrewMemberId}
         onClose={() => setSelectedCrewMemberId(null)}
+      />
+
+      {/* Edit Assignment Modal */}
+      <EditAssignmentModal
+        assignment={editingAssignment?.assignment as any}
+        isOpen={!!editingAssignment}
+        onClose={() => setEditingAssignment(null)}
+        onSuccess={handleEditSuccess}
+        roles={roles}
       />
     </div>
   )
