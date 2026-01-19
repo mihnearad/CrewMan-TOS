@@ -17,13 +17,35 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Inline script to prevent flash of wrong theme (FOUC).
+ * Runs before React hydration to apply the correct theme class.
+ */
+const themeScript = `
+  (function() {
+    try {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
+      </head>
       <body
         className={`${inter.variable} antialiased`}
       >

@@ -64,7 +64,7 @@ export default function NewAssignmentModal({
 
     // Validate
     if (!formData.projectId) {
-      setError('Please select a project')
+      setError('Please select a vessel')
       return
     }
 
@@ -113,7 +113,7 @@ export default function NewAssignmentModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">New Assignment</h2>
-            <p className="text-sm text-gray-500">Assign {crewMemberName} to a project</p>
+            <p className="text-sm text-gray-500">Assign {crewMemberName} to a vessel</p>
           </div>
           <button
             onClick={onClose}
@@ -129,7 +129,7 @@ export default function NewAssignmentModal({
             {/* Project selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Project <span className="text-red-500">*</span>
+                Select Vessel <span className="text-red-500">*</span>
               </label>
 
               {/* Search input */}
@@ -139,7 +139,7 @@ export default function NewAssignmentModal({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search projects..."
+                  placeholder="Search vessels..."
                   className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -148,7 +148,7 @@ export default function NewAssignmentModal({
               <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
                 {filteredProjects.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-sm">
-                    No projects found
+                    No vessels found
                   </div>
                 ) : (
                   filteredProjects.map((project) => (
@@ -196,10 +196,10 @@ export default function NewAssignmentModal({
               </div>
             )}
 
-            {/* Role on project */}
+            {/* Role onboard */}
             <div>
               <label htmlFor="roleOnProject" className="block text-sm font-medium text-gray-700 mb-1">
-                Role on Project
+                Role Onboard
               </label>
               <input
                 type="text"

@@ -3,7 +3,7 @@
  * 
  * Reusable filter pill buttons supporting single or multi-select modes.
  * Features color-coded options, active states with focus rings, and
- * accessible keyboard navigation.
+ * accessible keyboard navigation. Supports dark mode.
  * 
  * @example
  * ```tsx
@@ -40,6 +40,8 @@ export interface FilterPillOption {
   label: string
   /** Tailwind classes for active state (e.g., 'bg-green-100 text-green-800 border-green-200') */
   activeClasses?: string
+  /** Dark mode classes for active state */
+  darkActiveClasses?: string
   /** Optional count badge */
   count?: number
   /** Optional icon component */
@@ -74,7 +76,7 @@ const sizeClasses = {
   md: 'px-3 py-1 text-xs',
 }
 
-const defaultActiveClasses = 'bg-blue-100 text-blue-800 border-blue-200'
+const defaultActiveClasses = 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700'
 
 export default function FilterPills({
   label,
@@ -101,7 +103,7 @@ export default function FilterPills({
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {label && (
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
           {label}:
         </span>
       )}
@@ -115,8 +117,8 @@ export default function FilterPills({
             'rounded-full font-medium border transition-all',
             sizeClasses[size],
             !hasSelection
-              ? 'bg-gray-900 text-white border-gray-900'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
           )}
         >
           {allOptionLabel}
@@ -126,7 +128,9 @@ export default function FilterPills({
       {/* Filter options */}
       {options.map((option) => {
         const selected = isSelected(option.value)
-        const activeClasses = option.activeClasses || defaultActiveClasses
+        const activeClasses = option.activeClasses 
+          ? `${option.activeClasses} ${option.darkActiveClasses || ''}`
+          : defaultActiveClasses
         
         return (
           <button
@@ -137,8 +141,8 @@ export default function FilterPills({
               'rounded-full font-medium border transition-all inline-flex items-center gap-1.5',
               sizeClasses[size],
               selected
-                ? cn(activeClasses, 'ring-2 ring-offset-1 ring-blue-500')
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                ? cn(activeClasses, 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-900')
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
             )}
             aria-pressed={selected}
           >
@@ -148,7 +152,7 @@ export default function FilterPills({
               <span 
                 className={cn(
                   'ml-0.5 px-1.5 py-0.5 rounded-full text-xs',
-                  selected ? 'bg-white/30' : 'bg-gray-100'
+                  selected ? 'bg-white/30 dark:bg-black/20' : 'bg-gray-100 dark:bg-gray-700'
                 )}
               >
                 {option.count}
@@ -165,10 +169,10 @@ export default function FilterPills({
  * Pre-configured status filter options for projects
  */
 export const projectStatusOptions: FilterPillOption[] = [
-  { value: 'active', label: 'Active', activeClasses: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'planned', label: 'Planned', activeClasses: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  { value: 'completed', label: 'Completed', activeClasses: 'bg-gray-100 text-gray-800 border-gray-200' },
-  { value: 'cancelled', label: 'Cancelled', activeClasses: 'bg-red-100 text-red-800 border-red-200' },
+  { value: 'active', label: 'Active', activeClasses: 'bg-green-100 text-green-800 border-green-200', darkActiveClasses: 'dark:bg-green-900/50 dark:text-green-300 dark:border-green-700' },
+  { value: 'planned', label: 'Planned', activeClasses: 'bg-yellow-100 text-yellow-800 border-yellow-200', darkActiveClasses: 'dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700' },
+  { value: 'completed', label: 'Completed', activeClasses: 'bg-gray-100 text-gray-800 border-gray-200', darkActiveClasses: 'dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600' },
+  { value: 'cancelled', label: 'Cancelled', activeClasses: 'bg-red-100 text-red-800 border-red-200', darkActiveClasses: 'dark:bg-red-900/50 dark:text-red-300 dark:border-red-700' },
 ]
 
 /**
@@ -184,24 +188,24 @@ export const projectTypeOptions: FilterPillOption[] = [
  * Pre-configured status filter options for crew
  */
 export const crewStatusOptions: FilterPillOption[] = [
-  { value: 'available', label: 'Available', activeClasses: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'on_project', label: 'On Project', activeClasses: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { value: 'on_leave', label: 'On Leave', activeClasses: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { value: 'available', label: 'Available', activeClasses: 'bg-green-100 text-green-800 border-green-200', darkActiveClasses: 'dark:bg-green-900/50 dark:text-green-300 dark:border-green-700' },
+  { value: 'on_project', label: 'Onboard', activeClasses: 'bg-blue-100 text-blue-800 border-blue-200', darkActiveClasses: 'dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700' },
+  { value: 'on_leave', label: 'On Leave', activeClasses: 'bg-yellow-100 text-yellow-800 border-yellow-200', darkActiveClasses: 'dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700' },
 ]
 
 /**
  * Pre-configured status filter options for clients/consultants
  */
 export const entityStatusOptions: FilterPillOption[] = [
-  { value: 'active', label: 'Active', activeClasses: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'inactive', label: 'Inactive', activeClasses: 'bg-gray-100 text-gray-800 border-gray-200' },
+  { value: 'active', label: 'Active', activeClasses: 'bg-green-100 text-green-800 border-green-200', darkActiveClasses: 'dark:bg-green-900/50 dark:text-green-300 dark:border-green-700' },
+  { value: 'inactive', label: 'Inactive', activeClasses: 'bg-gray-100 text-gray-800 border-gray-200', darkActiveClasses: 'dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600' },
 ]
 
 /**
  * Status options for consultants (includes on_leave)
  */
 export const consultantStatusOptions: FilterPillOption[] = [
-  { value: 'active', label: 'Active', activeClasses: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'inactive', label: 'Inactive', activeClasses: 'bg-gray-100 text-gray-800 border-gray-200' },
-  { value: 'on_leave', label: 'On Leave', activeClasses: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { value: 'active', label: 'Active', activeClasses: 'bg-green-100 text-green-800 border-green-200', darkActiveClasses: 'dark:bg-green-900/50 dark:text-green-300 dark:border-green-700' },
+  { value: 'inactive', label: 'Inactive', activeClasses: 'bg-gray-100 text-gray-800 border-gray-200', darkActiveClasses: 'dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600' },
+  { value: 'on_leave', label: 'On Leave', activeClasses: 'bg-yellow-100 text-yellow-800 border-yellow-200', darkActiveClasses: 'dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700' },
 ]

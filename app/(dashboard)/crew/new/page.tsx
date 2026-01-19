@@ -72,6 +72,74 @@ export default function NewCrewPage() {
           </div>
         </div>
 
+        <div className="border-t pt-6 mt-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Additional Details</h3>
+          
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">
+                Nationality
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  name="nationality"
+                  id="nationality"
+                  placeholder="e.g., Lithuanian, Latvian"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="flag_state" className="block text-sm font-medium text-gray-700">
+                Flag State
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  name="flag_state"
+                  id="flag_state"
+                  maxLength={3}
+                  placeholder="e.g., TUV, LUX, GIB"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border uppercase"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">3-letter country code</p>
+            </div>
+
+            <div>
+              <label htmlFor="home_airport" className="block text-sm font-medium text-gray-700">
+                Home Airport
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  name="home_airport"
+                  id="home_airport"
+                  placeholder="e.g., WAW - Warsaw"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="company" className="block text-sm font-medium text-gray-700">
+                Company / Agency
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  name="company"
+                  id="company"
+                  placeholder="e.g., TOSN, SFX"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-end gap-3">
           <Link
             href=".."

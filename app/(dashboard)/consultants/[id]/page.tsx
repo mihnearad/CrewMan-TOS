@@ -158,22 +158,22 @@ export default async function ConsultantDetailPage({ params }: { params: Promise
         </div>
       )}
 
-      {/* Assigned Projects */}
+      {/* Assigned Vessels */}
       <div className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Assigned Projects</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Assigned Vessels</h2>
           <Link
             href={`/projects/new?consultant_id=${id}`}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
           >
-            + Add Project
+            + Add Vessel
           </Link>
         </div>
 
         {!projects || projects.length === 0 ? (
           <div className="text-center py-8">
             <Anchor className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-2 text-sm text-gray-500">No projects assigned to this consultant</p>
+            <p className="mt-2 text-sm text-gray-500">No vessels assigned to this consultant</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">

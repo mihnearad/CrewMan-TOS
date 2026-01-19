@@ -156,22 +156,22 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      {/* Associated Projects */}
+      {/* Associated Vessels */}
       <div className="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Projects</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Vessels</h2>
           <Link
             href={`/projects/new?client_id=${id}`}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
           >
-            + Add Project
+            + Add Vessel
           </Link>
         </div>
 
         {!projects || projects.length === 0 ? (
           <div className="text-center py-8">
             <Anchor className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-2 text-sm text-gray-500">No projects associated with this client</p>
+            <p className="mt-2 text-sm text-gray-500">No vessels associated with this client</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">

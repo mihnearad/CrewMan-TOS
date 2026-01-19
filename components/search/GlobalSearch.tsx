@@ -27,24 +27,24 @@ interface GlobalSearchProps {
 /** Category display configuration */
 const categoryConfig: Record<SearchCategory, { label: string; icon: React.ReactNode; color: string }> = {
   projects: { 
-    label: 'Projects', 
+    label: 'Vessels', 
     icon: <Anchor className="h-4 w-4" />, 
-    color: 'text-blue-600 bg-blue-100' 
+    color: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/50' 
   },
   crew: { 
     label: 'Crew', 
     icon: <Users className="h-4 w-4" />, 
-    color: 'text-green-600 bg-green-100' 
+    color: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/50' 
   },
   clients: { 
     label: 'Clients', 
     icon: <Building2 className="h-4 w-4" />, 
-    color: 'text-indigo-600 bg-indigo-100' 
+    color: 'text-indigo-600 bg-indigo-100 dark:text-indigo-400 dark:bg-indigo-900/50' 
   },
   consultants: { 
     label: 'Consultants', 
     icon: <UserCog className="h-4 w-4" />, 
-    color: 'text-teal-600 bg-teal-100' 
+    color: 'text-teal-600 bg-teal-100 dark:text-teal-400 dark:bg-teal-900/50' 
   },
 }
 
@@ -170,32 +170,32 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       
       {/* Modal */}
       <div className="fixed inset-x-4 top-[15%] mx-auto max-w-2xl z-50">
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200">
+        <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:bg-gray-900 dark:border-gray-700 dark:shadow-gray-950/50">
           {/* Search Input */}
-          <div className="relative flex items-center border-b border-gray-200">
-            <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+          <div className="relative flex items-center border-b border-gray-200 dark:border-gray-700">
+            <Search className="absolute left-4 h-5 w-5 text-gray-400 dark:text-gray-500" />
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search projects, crew, clients, consultants..."
-              className="w-full py-4 pl-12 pr-12 text-lg outline-none placeholder:text-gray-400"
+              placeholder="Search vessels, crew, clients, consultants..."
+              className="w-full py-4 pl-12 pr-12 text-lg outline-none placeholder:text-gray-400 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
               autoComplete="off"
               spellCheck={false}
             />
             {isLoading ? (
-              <Loader2 className="absolute right-4 h-5 w-5 text-gray-400 animate-spin" />
+              <Loader2 className="absolute right-4 h-5 w-5 text-gray-400 animate-spin dark:text-gray-500" />
             ) : query ? (
               <button
                 onClick={() => setQuery('')}
-                className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 rounded"
+                className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 rounded dark:text-gray-500 dark:hover:text-gray-300"
               >
                 <X className="h-4 w-4" />
               </button>
             ) : (
-              <kbd className="absolute right-4 px-2 py-1 text-xs text-gray-400 bg-gray-100 rounded border border-gray-200">
+              <kbd className="absolute right-4 px-2 py-1 text-xs text-gray-400 bg-gray-100 rounded border border-gray-200 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-500">
                 ESC
               </kbd>
             )}
@@ -208,7 +208,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           >
             {/* Loading state */}
             {isLoading && hasQuery && (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin" />
                 Searching...
               </div>
@@ -223,15 +223,15 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                   
                   const config = categoryConfig[category]
                   
-                  return (
+                    return (
                     <div key={category}>
                       {/* Category Header */}
-                      <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                      <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2 dark:text-gray-400">
                         <span className={cn('p-1 rounded', config.color)}>
                           {config.icon}
                         </span>
                         {config.label}
-                        <span className="text-gray-400">({categoryResults.length})</span>
+                        <span className="text-gray-400 dark:text-gray-500">({categoryResults.length})</span>
                       </div>
                       
                       {/* Results */}
@@ -247,7 +247,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                             onMouseEnter={() => setSelectedIndex(globalIndex)}
                             className={cn(
                               'w-full px-4 py-3 flex items-center gap-3 text-left transition-colors',
-                              isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              isSelected ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                             )}
                           >
                             {/* Color indicator for projects */}
@@ -270,11 +270,11 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                             
                             {/* Content */}
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-900 truncate">
+                              <div className="font-medium text-gray-900 truncate dark:text-white">
                                 <HighlightMatch text={result.title} query={query} />
                               </div>
                               {result.subtitle && (
-                                <div className="text-sm text-gray-500 truncate">
+                                <div className="text-sm text-gray-500 truncate dark:text-gray-400">
                                   <HighlightMatch text={result.subtitle} query={query} />
                                 </div>
                               )}
@@ -285,10 +285,10 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                               <span className={cn(
                                 'px-2 py-0.5 text-xs rounded-full',
                                 result.status === 'active' || result.status === 'available'
-                                  ? 'bg-green-100 text-green-700'
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400'
                                   : result.status === 'on_project'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-600'
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400'
+                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                               )}>
                                 {result.status.replace('_', ' ')}
                               </span>
@@ -296,7 +296,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                             
                             {/* Arrow indicator when selected */}
                             {isSelected && (
-                              <ArrowRight className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                              <ArrowRight className="h-4 w-4 text-blue-600 flex-shrink-0 dark:text-blue-400" />
                             )}
                           </button>
                         )
@@ -310,16 +310,16 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
             {/* No results */}
             {!isLoading && hasQuery && !hasResults && (
               <div className="p-8 text-center">
-                <Search className="h-8 w-8 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500">No results found for &quot;{query}&quot;</p>
-                <p className="text-sm text-gray-400 mt-1">Try a different search term</p>
+                <Search className="h-8 w-8 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400">No results found for &quot;{query}&quot;</p>
+                <p className="text-sm text-gray-400 mt-1 dark:text-gray-500">Try a different search term</p>
               </div>
             )}
             
             {/* Empty state */}
             {!hasQuery && !results && (
               <div className="p-6">
-                <p className="text-sm text-gray-500 text-center mb-4">
+                <p className="text-sm text-gray-500 text-center mb-4 dark:text-gray-400">
                   Start typing to search across all data
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -328,7 +328,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
                     return (
                       <div 
                         key={category}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-600"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                       >
                         <span className={cn('p-1 rounded', config.color)}>
                           {config.icon}
@@ -343,20 +343,20 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           </div>
           
           {/* Footer */}
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono">↑</kbd>
-                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono">↓</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">↑</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">↓</kbd>
                 <span className="ml-1">to navigate</span>
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono">↵</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">↵</kbd>
                 <span className="ml-1">to select</span>
               </span>
             </div>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono">esc</kbd>
+              <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300 font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">esc</kbd>
               <span className="ml-1">to close</span>
             </span>
           </div>
@@ -379,7 +379,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) => 
         regex.test(part) ? (
-          <mark key={i} className="bg-yellow-200 text-yellow-900 rounded px-0.5">
+          <mark key={i} className="bg-yellow-200 text-yellow-900 rounded px-0.5 dark:bg-yellow-900/50 dark:text-yellow-300">
             {part}
           </mark>
         ) : (

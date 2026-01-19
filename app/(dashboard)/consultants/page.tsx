@@ -29,10 +29,10 @@ export default async function ConsultantsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Consultants</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Consultants</h1>
         <Link
           href="/consultants/new"
-          className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+          className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
         >
           <Plus className="mr-2 h-4 w-4" />
           New Consultant
@@ -40,14 +40,14 @@ export default async function ConsultantsPage() {
       </div>
 
       {consultantsWithCount.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-          <UserCog className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No consultants</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by adding a new consultant.</p>
+        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center dark:border-gray-600">
+          <UserCog className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No consultants</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by adding a new consultant.</p>
           <div className="mt-6">
             <Link
               href="/consultants/new"
-              className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+              className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400"
             >
               <Plus className="mr-2 h-4 w-4" />
               New Consultant

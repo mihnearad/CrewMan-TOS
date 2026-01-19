@@ -140,10 +140,10 @@ export default function CrewList({ crew }: CrewListProps) {
       
       {/* Empty state */}
       {filteredCrew.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No matching crew members</h3>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center dark:border-gray-600">
+          <Users className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No matching crew members</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {crew.length === 0
               ? 'Get started by adding your first crew member.'
               : 'Try adjusting your search or filters.'}
@@ -151,15 +151,15 @@ export default function CrewList({ crew }: CrewListProps) {
           {hasFilters && (
             <button
               onClick={clearAll}
-              className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+              className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline dark:text-blue-400 dark:hover:text-blue-300"
             >
               Clear all filters
             </button>
           )}
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <ul role="list" className="divide-y divide-gray-200">
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg dark:bg-gray-900 dark:shadow-gray-900/30">
+          <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredCrew.map((member) => {
               const currentAssignment = getActiveAssignment(member)
               const assignmentCount = member.assignments?.length || 0
@@ -168,7 +168,7 @@ export default function CrewList({ crew }: CrewListProps) {
                 <li key={member.id}>
                   <Link
                     href={`/crew/${member.id}`}
-                    className="block hover:bg-gray-50 transition-colors"
+                    className="block hover:bg-gray-50 transition-colors dark:hover:bg-gray-800"
                   >
                     <div className="px-4 py-4 sm:px-6">
                       <div className="flex items-center justify-between">
@@ -177,8 +177,8 @@ export default function CrewList({ crew }: CrewListProps) {
                             {member.full_name.charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{member.full_name}</p>
-                            <p className="text-sm text-gray-500 truncate">{member.role}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate dark:text-white">{member.full_name}</p>
+                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">{member.role}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -190,10 +190,10 @@ export default function CrewList({ crew }: CrewListProps) {
                                 style={{ backgroundColor: currentAssignment.project?.color || '#6B7280' }}
                               />
                               <div className="text-sm">
-                                <span className="text-gray-700 hidden sm:inline">{currentAssignment.project?.name}</span>
-                                <span className="text-gray-700 sm:hidden">{currentAssignment.project?.name?.substring(0, 15)}{currentAssignment.project?.name?.length > 15 ? '...' : ''}</span>
-                                <span className="text-gray-400 mx-1 hidden sm:inline">·</span>
-                                <span className={`text-xs ${currentAssignment.type === 'active' ? 'text-green-600' : 'text-blue-600'} hidden sm:inline`}>
+                                <span className="text-gray-700 hidden sm:inline dark:text-gray-300">{currentAssignment.project?.name}</span>
+                                <span className="text-gray-700 sm:hidden dark:text-gray-300">{currentAssignment.project?.name?.substring(0, 15)}{currentAssignment.project?.name?.length > 15 ? '...' : ''}</span>
+                                <span className="text-gray-400 mx-1 hidden sm:inline dark:text-gray-500">·</span>
+                                <span className={`text-xs ${currentAssignment.type === 'active' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'} hidden sm:inline`}>
                                   {currentAssignment.type === 'active' ? 'Active' : `Starts ${format(new Date(currentAssignment.start_date), 'MMM d')}`}
                                 </span>
                               </div>
@@ -201,8 +201,8 @@ export default function CrewList({ crew }: CrewListProps) {
                           )}
                           
                           {/* Assignment Count */}
-                          <div className="flex items-center text-sm text-gray-500" title="Total assignments">
-                            <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400" title="Total assignments">
+                            <Calendar className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
                             {assignmentCount}
                           </div>
                           
@@ -212,12 +212,12 @@ export default function CrewList({ crew }: CrewListProps) {
                             currentStatus={member.status}
                           />
                           
-                          <ArrowRight className="h-4 w-4 text-gray-400" />
+                          <ArrowRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                         </div>
                       </div>
                       
                       {/* Contact info */}
-                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500">
+                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
                         {member.email && (
                           <span className="flex items-center">
                             <Mail className="h-3 w-3 mr-1" />
@@ -233,7 +233,7 @@ export default function CrewList({ crew }: CrewListProps) {
                         {/* Mobile assignment details */}
                         {currentAssignment && (
                           <span className="flex items-center sm:hidden">
-                            <span className={`${currentAssignment.type === 'active' ? 'text-green-600' : 'text-blue-600'}`}>
+                            <span className={`${currentAssignment.type === 'active' ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
                               {currentAssignment.type === 'active' ? 'Active now' : `Starts ${format(new Date(currentAssignment.start_date), 'MMM d')}`}
                             </span>
                           </span>
@@ -250,10 +250,10 @@ export default function CrewList({ crew }: CrewListProps) {
       
       {/* Results count */}
       {hasFilters && filteredCrew.length > 0 && (
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Showing {filteredCrew.length} of {crew.length} crew members
           {(activeFilterCount + (hasRole ? 1 : 0)) > 0 && (
-            <span className="ml-2 text-blue-600">
+            <span className="ml-2 text-blue-600 dark:text-blue-400">
               ({activeFilterCount + (hasRole ? 1 : 0)} filter{(activeFilterCount + (hasRole ? 1 : 0)) > 1 ? 's' : ''} applied)
             </span>
           )}

@@ -19,7 +19,7 @@ export default async function NewProjectPage({
       <div className="md:flex md:items-center md:justify-between mb-6">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-            New Project
+            New Vessel
           </h2>
         </div>
       </div>
@@ -27,7 +27,7 @@ export default async function NewProjectPage({
       <form action={createProject} className="bg-white shadow sm:rounded-lg p-6 space-y-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Project Name
+            Vessel Name
           </label>
           <div className="mt-1">
             <input
@@ -36,7 +36,7 @@ export default async function NewProjectPage({
               id="name"
               required
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-              placeholder="e.g., North Sea Wind Farm"
+              placeholder="e.g., Atlantic Explorer"
             />
           </div>
         </div>
@@ -157,7 +157,7 @@ export default async function NewProjectPage({
               id="notes"
               rows={4}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-              placeholder="Additional notes or details about the project..."
+              placeholder="Additional notes or details about the vessel..."
             />
           </div>
         </div>
@@ -173,7 +173,7 @@ export default async function NewProjectPage({
             type="submit"
             className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Create Project
+            Create Vessel
           </button>
         </div>
       </form>

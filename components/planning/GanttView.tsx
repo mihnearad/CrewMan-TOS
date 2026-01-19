@@ -26,6 +26,7 @@ import GanttControls from './GanttControls'
 import GanttHeader from './GanttHeader'
 import GanttSidebar from './GanttSidebar'
 import GanttRow from './GanttRow'
+import CrewDetailModal from './CrewDetailModal'
 
 interface GanttViewProps {
   assignments: GanttAssignment[]
@@ -34,9 +35,9 @@ interface GanttViewProps {
   filterProjectId?: string
 }
 
-const ROW_HEIGHT = 50
-const HEADER_HEIGHT = 50
-const SIDEBAR_WIDTH = 200
+const ROW_HEIGHT = 32
+const HEADER_HEIGHT = 36
+const SIDEBAR_WIDTH = 340
 
 export default function GanttView({
   assignments,
@@ -44,13 +45,14 @@ export default function GanttView({
   crewMembers,
   filterProjectId,
 }: GanttViewProps) {
-  const [viewMode, setViewMode] = useState<GanttViewMode>('by-crew')
+  const [viewMode, setViewMode] = useState<GanttViewMode>('by-project')
   const [zoomLevel, setZoomLevel] = useState<GanttZoomLevel>('week')
   const [timeRange, setTimeRange] = useState<GanttTimeRange>(getDefaultTimeRange)
   const [draggedItem, setDraggedItem] = useState<GanttItem | null>(null)
   const [dragOffset, setDragOffset] = useState<number>(0)
   const [conflictingItems, setConflictingItems] = useState<Set<string>>(new Set())
   const [isUpdating, setIsUpdating] = useState(false)
+  const [selectedCrewMemberId, setSelectedCrewMemberId] = useState<string | null>(null)
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -213,30 +215,61 @@ export default function GanttView({
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative">
-          {/* Header */}
-          <GanttHeader
-            timeRange={timeRange}
-            zoomLevel={zoomLevel}
-            sidebarWidth={SIDEBAR_WIDTH}
-          />
+        {/* Main scrollable container - horizontal scroll for everything */}
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto overflow-y-auto"
+          style={{ maxHeight: 'calc(100vh - 300px)' }}
+        >
+          <div style={{ width: SIDEBAR_WIDTH + timelineWidth, minWidth: '100%' }}>
+            {/* Header Row */}
+            <div className="flex sticky top-0 z-10">
+              {/* Sidebar header with column labels */}
+              <div 
+                className="flex-shrink-0 border-b border-r-2 border-r-gray-300 bg-gray-100 sticky left-0 z-20 flex items-center px-2 gap-1 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                style={{ width: SIDEBAR_WIDTH, height: HEADER_HEIGHT }}
+              >
+                <div className="w-2 flex-shrink-0" /> {/* Indent spacer */}
+                <div className="flex-1 text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                  Name
+                </div>
+                <div className="w-[70px] text-[10px] font-medium text-gray-500 uppercase tracking-wide text-center">
+                  Position
+                </div>
+                <div className="w-[32px] text-[10px] font-medium text-gray-500 uppercase tracking-wide text-center">
+                  Flag
+                </div>
+                <div className="w-[32px] text-[10px] font-medium text-gray-500 uppercase tracking-wide text-center">
+                  Apt
+                </div>
+              </div>
+              {/* Timeline header - scrolls horizontally with content */}
+              <div style={{ width: timelineWidth }}>
+                <GanttHeader
+                  timeRange={timeRange}
+                  zoomLevel={zoomLevel}
+                  sidebarWidth={0}
+                />
+              </div>
+            </div>
 
-          {/* Body with sidebar and rows */}
-          <div
-            ref={scrollContainerRef}
-            className="overflow-x-auto overflow-y-auto"
-            style={{ maxHeight: 'calc(100vh - 300px)' }}
-          >
-            <div className="flex" style={{ width: SIDEBAR_WIDTH + timelineWidth }}>
-              {/* Sidebar */}
-              <GanttSidebar
-                rows={rows}
-                rowHeight={ROW_HEIGHT}
-                width={SIDEBAR_WIDTH}
-              />
+            {/* Body Row */}
+            <div className="flex">
+              {/* Sidebar - sticky left with shadow separator */}
+              <div 
+                className="flex-shrink-0 sticky left-0 z-10 bg-white border-r-2 border-r-gray-300 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                style={{ width: SIDEBAR_WIDTH }}
+              >
+                <GanttSidebar
+                  rows={rows}
+                  rowHeight={ROW_HEIGHT}
+                  width={SIDEBAR_WIDTH}
+                  onCrewClick={(crewMemberId) => setSelectedCrewMemberId(crewMemberId)}
+                />
+              </div>
 
-              {/* Rows */}
-              <div className="flex-1" style={{ width: timelineWidth }}>
+              {/* Timeline rows */}
+              <div style={{ width: timelineWidth }}>
                 {rows.length === 0 ? (
                   <div className="flex items-center justify-center h-32 text-gray-500">
                     No assignments to display
@@ -267,6 +300,13 @@ export default function GanttView({
           <span>Conflict detected - this crew member is already assigned during this period</span>
         </div>
       )}
+
+      {/* Crew Detail Modal */}
+      <CrewDetailModal
+        crewMemberId={selectedCrewMemberId || ''}
+        isOpen={!!selectedCrewMemberId}
+        onClose={() => setSelectedCrewMemberId(null)}
+      />
     </div>
   )
 }

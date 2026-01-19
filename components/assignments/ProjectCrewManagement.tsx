@@ -299,7 +299,7 @@ function AddCrewModal({
 
         <div>
           <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-            Role on Project (Optional)
+            Role Onboard (Optional)
           </label>
           <input
             type="text"
@@ -492,7 +492,7 @@ function EditAssignmentModal({
 
         <div>
           <label htmlFor="editRole" className="block text-sm font-medium text-gray-700">
-            Role on Project
+            Role Onboard
           </label>
           <input
             type="text"
@@ -542,7 +542,7 @@ function AssignmentCard({
   ) + 1
 
   const handleRemove = () => {
-    if (!confirm(`Remove ${assignment.crew_member.full_name} from this project?`)) {
+    if (!confirm(`Remove ${assignment.crew_member.full_name} from this vessel?`)) {
       return
     }
 
@@ -980,7 +980,7 @@ export default function ProjectCrewManagement({
             <Users className="mx-auto h-12 w-12 text-gray-300" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No crew assigned</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Get started by assigning crew members to this project.
+              Get started by assigning crew members to this vessel.
             </p>
             <div className="mt-6">
               <button

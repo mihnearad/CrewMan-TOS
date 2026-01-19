@@ -59,7 +59,7 @@ export default function GanttControls({
             } rounded-r-md`}
           >
             <FolderOpen className="w-4 h-4 mr-1.5" />
-            Project
+            Vessel
           </button>
         </div>
       </div>

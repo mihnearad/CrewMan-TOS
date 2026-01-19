@@ -35,6 +35,35 @@ export default function GanttRow({
   const columns = getTimeScaleColumns(timeRange, zoomLevel)
   const pixelsPerUnit = getPixelsPerUnit(zoomLevel)
 
+  // Vessel header row - just show background, no items
+  if (row.isGroupHeader) {
+    return (
+      <div
+        className="relative border-b flex"
+        style={{ 
+          height: rowHeight,
+          backgroundColor: row.color ? `${row.color}15` : '#f3f4f6',
+        }}
+      >
+        {/* Grid background */}
+        <div className="absolute inset-0 flex pointer-events-none">
+          {columns.map((column, idx) => {
+            const isCurrentDay = zoomLevel === 'day' && isToday(column.date)
+            return (
+              <div
+                key={idx}
+                className={`flex-shrink-0 border-r border-gray-200/50 ${
+                  isCurrentDay ? 'bg-blue-100/30' : ''
+                }`}
+                style={{ width: pixelsPerUnit }}
+              />
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       ref={setNodeRef}

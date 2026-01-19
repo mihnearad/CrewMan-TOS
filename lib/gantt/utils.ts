@@ -145,6 +145,13 @@ export function assignmentsToRows(
         id: crew.id,
         label: crew.full_name,
         sublabel: crew.role,
+        crewMemberId: crew.id,
+        crewDetails: {
+          nationality: crew.nationality,
+          flag_state: crew.flag_state,
+          home_airport: crew.home_airport,
+          company: crew.company,
+        },
         items: crewAssignments.map(a => ({
           id: a.id,
           rowId: crew.id,
@@ -155,21 +162,59 @@ export function assignmentsToRows(
       }
     })
   } else {
-    return projects.map(project => {
+    // Vessel-centric view: show vessel as header, then crew rows underneath
+    const rows: GanttRow[] = []
+    
+    projects.forEach(project => {
       const projectAssignments = assignments.filter(a => a.project_id === project.id)
-      return {
-        id: project.id,
+      
+      // Only show vessels that have assignments
+      if (projectAssignments.length === 0) return
+      
+      // Add vessel header row (no items, just a header)
+      rows.push({
+        id: `vessel-header-${project.id}`,
         label: project.name,
         color: project.color,
-        items: projectAssignments.map(a => ({
-          id: a.id,
-          rowId: project.id,
-          start: parseISO(a.start_date),
-          end: parseISO(a.end_date),
-          assignment: a,
-        })),
-      }
+        items: [],
+        isGroupHeader: true,
+      })
+      
+      // Group assignments by crew member for this vessel
+      const crewAssignmentsMap = new Map<string, GanttAssignment[]>()
+      projectAssignments.forEach(a => {
+        const existing = crewAssignmentsMap.get(a.crew_member_id) || []
+        existing.push(a)
+        crewAssignmentsMap.set(a.crew_member_id, existing)
+      })
+      
+      // Add a row for each crew member on this vessel
+      crewAssignmentsMap.forEach((crewAssignments, crewId) => {
+        const crewMember = crewAssignments[0].crew_member
+        rows.push({
+          id: `${project.id}-${crewId}`,
+          label: crewMember.full_name,
+          sublabel: crewAssignments[0].role_on_project || crewMember.role,
+          parentGroupId: project.id,
+          crewMemberId: crewId,
+          crewDetails: {
+            nationality: crewMember.nationality,
+            flag_state: crewMember.flag_state,
+            home_airport: crewMember.home_airport,
+            company: crewMember.company,
+          },
+          items: crewAssignments.map(a => ({
+            id: a.id,
+            rowId: `${project.id}-${crewId}`,
+            start: parseISO(a.start_date),
+            end: parseISO(a.end_date),
+            assignment: a,
+          })),
+        })
+      })
     })
+    
+    return rows
   }
 }
 

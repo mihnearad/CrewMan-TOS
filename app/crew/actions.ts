@@ -11,12 +11,20 @@ export async function createCrewMember(formData: FormData) {
   const role = formData.get('role') as string
   const email = formData.get('email') as string
   const phone = formData.get('phone') as string
+  const nationality = formData.get('nationality') as string
+  const flag_state = formData.get('flag_state') as string
+  const home_airport = formData.get('home_airport') as string
+  const company = formData.get('company') as string
 
   const { error } = await supabase.from('crew_members').insert({
     full_name,
     role,
     email: email || null,
     phone: phone || null,
+    nationality: nationality || null,
+    flag_state: flag_state?.toUpperCase() || null,
+    home_airport: home_airport || null,
+    company: company || null,
     status: 'available',
   })
 
@@ -37,6 +45,10 @@ export async function updateCrewMember(id: string, formData: FormData) {
   const email = formData.get('email') as string
   const phone = formData.get('phone') as string
   const status = formData.get('status') as string
+  const nationality = formData.get('nationality') as string
+  const flag_state = formData.get('flag_state') as string
+  const home_airport = formData.get('home_airport') as string
+  const company = formData.get('company') as string
 
   const { error } = await supabase
     .from('crew_members')
@@ -45,6 +57,10 @@ export async function updateCrewMember(id: string, formData: FormData) {
       role,
       email: email || null,
       phone: phone || null,
+      nationality: nationality || null,
+      flag_state: flag_state?.toUpperCase() || null,
+      home_airport: home_airport || null,
+      company: company || null,
       status,
     })
     .eq('id', id)

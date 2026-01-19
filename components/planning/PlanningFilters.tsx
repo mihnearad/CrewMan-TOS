@@ -102,24 +102,24 @@ export default function PlanningFilters({
   )
   
   return (
-    <div className="bg-white rounded-lg border border-gray-200 mb-4">
+    <div className="bg-white rounded-lg border border-gray-200 mb-4 dark:bg-gray-900 dark:border-gray-700">
       {/* Filter Header (always visible) */}
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
         >
           <Filter className="h-4 w-4" />
           Filters
           {hasFilters && (
-            <span className="ml-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+            <span className="ml-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900/50 dark:text-blue-400">
               {activeFilterCount}
             </span>
           )}
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-400" />
+            <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+            <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
           )}
         </button>
         
@@ -130,8 +130,8 @@ export default function PlanningFilters({
             className={cn(
               'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-all',
               endingSoon
-                ? 'bg-amber-100 text-amber-800 border-amber-200 ring-2 ring-offset-1 ring-amber-500'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                ? 'bg-amber-100 text-amber-800 border-amber-200 ring-2 ring-offset-1 ring-amber-500 dark:bg-amber-900/50 dark:text-amber-400 dark:border-amber-700 dark:ring-amber-500'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
             )}
           >
             <AlertTriangle className="h-3.5 w-3.5" />
@@ -142,7 +142,7 @@ export default function PlanningFilters({
           {hasFilters && (
             <button
               onClick={onClearAll}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               <X className="h-3.5 w-3.5" />
               Clear
@@ -155,30 +155,30 @@ export default function PlanningFilters({
       {!isExpanded && hasFilters && (
         <div className="px-4 pb-3 flex flex-wrap gap-2">
           {selectedProjects.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
-              {selectedProjects.length} project{selectedProjects.length > 1 ? 's' : ''}
-              <button onClick={() => selectedProjects.forEach(id => onProjectToggle(id))} className="hover:text-gray-900">
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded dark:bg-gray-800 dark:text-gray-300">
+              {selectedProjects.length} vessel{selectedProjects.length > 1 ? 's' : ''}
+              <button onClick={() => selectedProjects.forEach(id => onProjectToggle(id))} className="hover:text-gray-900 dark:hover:text-white">
                 <X className="h-3 w-3" />
               </button>
             </span>
           )}
           {selectedCrew.length > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded dark:bg-gray-800 dark:text-gray-300">
               {selectedCrew.length} crew
-              <button onClick={() => selectedCrew.forEach(id => onCrewToggle(id))} className="hover:text-gray-900">
+              <button onClick={() => selectedCrew.forEach(id => onCrewToggle(id))} className="hover:text-gray-900 dark:hover:text-white">
                 <X className="h-3 w-3" />
               </button>
             </span>
           )}
           {(dateFrom || dateTo) && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded dark:bg-gray-800 dark:text-gray-300">
               {dateFrom && dateTo 
                 ? `${format(new Date(dateFrom), 'MMM d')} - ${format(new Date(dateTo), 'MMM d')}`
                 : dateFrom 
                   ? `From ${format(new Date(dateFrom), 'MMM d')}`
                   : `Until ${format(new Date(dateTo!), 'MMM d')}`
               }
-              <button onClick={onDateClear} className="hover:text-gray-900">
+              <button onClick={onDateClear} className="hover:text-gray-900 dark:hover:text-white">
                 <X className="h-3 w-3" />
               </button>
             </span>
@@ -188,11 +188,11 @@ export default function PlanningFilters({
       
       {/* Expanded filter options */}
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4">
-          {/* Project Filter */}
+        <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4 dark:border-gray-700">
+          {/* Vessel Filter */}
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
-              Projects
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block dark:text-gray-400">
+              Vessels
             </label>
             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
               {activeProjects.map(project => {
@@ -204,8 +204,8 @@ export default function PlanningFilters({
                     className={cn(
                       'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border transition-all',
                       isSelected
-                        ? 'ring-2 ring-offset-1 ring-blue-500'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
+                        ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-gray-900'
+                        : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500 dark:text-gray-300'
                     )}
                     style={isSelected ? {
                       backgroundColor: `${project.color}20`,
@@ -222,14 +222,14 @@ export default function PlanningFilters({
                 )
               })}
               {activeProjects.length === 0 && (
-                <p className="text-xs text-gray-500">No active projects</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">No active vessels</p>
               )}
             </div>
           </div>
           
           {/* Crew Filter */}
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block dark:text-gray-400">
               Crew Members
             </label>
             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
@@ -242,21 +242,21 @@ export default function PlanningFilters({
                     className={cn(
                       'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border transition-all',
                       isSelected
-                        ? 'bg-blue-100 text-blue-800 border-blue-200 ring-2 ring-offset-1 ring-blue-500'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                        ? 'bg-blue-100 text-blue-800 border-blue-200 ring-2 ring-offset-1 ring-blue-500 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700 dark:ring-offset-gray-900'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
                     )}
                   >
-                    <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                    <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                       {crew.full_name.charAt(0)}
                     </div>
                     {crew.full_name}
-                    <span className="text-gray-400">·</span>
-                    <span className={isSelected ? 'text-blue-600' : 'text-gray-400'}>{crew.role}</span>
+                    <span className="text-gray-400 dark:text-gray-500">·</span>
+                    <span className={isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}>{crew.role}</span>
                   </button>
                 )
               })}
               {crewMembers.length === 0 && (
-                <p className="text-xs text-gray-500">No crew members</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">No crew members</p>
               )}
             </div>
           </div>

@@ -61,7 +61,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Projects
+          Back to Vessels
         </Link>
       </div>
 
@@ -78,7 +78,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {project.name}
               </h1>
               <p className="text-sm text-gray-500">
-                {project.type.charAt(0).toUpperCase() + project.type.slice(1)} Project
+                {project.type.charAt(0).toUpperCase() + project.type.slice(1)}
               </p>
             </div>
           </div>

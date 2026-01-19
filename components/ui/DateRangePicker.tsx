@@ -157,20 +157,20 @@ export default function DateRangePicker({
             'inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm',
             'transition-colors duration-150',
             hasRange
-              ? 'bg-blue-50 border-blue-200 text-blue-700'
-              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
+              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
           )}
         >
           <Calendar className="h-4 w-4" />
           {displayText || label}
           {hasRange ? (
-            <button
+              <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
                 onClear()
               }}
-              className="ml-1 hover:text-blue-900"
+              className="ml-1 hover:text-blue-900 dark:hover:text-blue-200"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -188,18 +188,18 @@ export default function DateRangePicker({
             />
             
             {/* Dropdown */}
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-4 min-w-[280px]">
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-4 min-w-[280px] dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/30">
               {/* Presets */}
               {showPresets && (
                 <div className="mb-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-2">Quick Select</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-2 dark:text-gray-400">Quick Select</p>
                   <div className="flex flex-wrap gap-1.5">
                     {datePresets.map((preset) => (
                       <button
                         key={preset.label}
                         type="button"
                         onClick={() => handlePresetSelect(preset)}
-                        className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                        className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                       >
                         {preset.label}
                       </button>
@@ -210,26 +210,26 @@ export default function DateRangePicker({
               
               {/* Custom Range */}
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Custom Range</p>
+                <p className="text-xs font-medium text-gray-500 uppercase mb-2 dark:text-gray-400">Custom Range</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
-                    <label className="text-xs text-gray-500 mb-1 block">From</label>
+                    <label className="text-xs text-gray-500 mb-1 block dark:text-gray-400">From</label>
                     <input
                       type="date"
                       value={from || ''}
                       onChange={(e) => onFromChange(e.target.value || null)}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-400"
                     />
                   </div>
-                  <span className="text-gray-400 mt-5">-</span>
+                  <span className="text-gray-400 mt-5 dark:text-gray-500">-</span>
                   <div className="flex-1">
-                    <label className="text-xs text-gray-500 mb-1 block">To</label>
+                    <label className="text-xs text-gray-500 mb-1 block dark:text-gray-400">To</label>
                     <input
                       type="date"
                       value={to || ''}
                       onChange={(e) => onToChange(e.target.value || null)}
                       min={from || undefined}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-400"
                     />
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function DateRangePicker({
                     onClear()
                     setIsOpen(false)
                   }}
-                  className="mt-3 w-full px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+                  className="mt-3 w-full px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
                 >
                   Clear dates
                 </button>
@@ -260,7 +260,7 @@ export default function DateRangePicker({
     <div className={cn('space-y-3', className)}>
       {/* Label with clear button */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-1.5 dark:text-gray-400">
           <Calendar className="h-3.5 w-3.5" />
           {label}
         </span>
@@ -268,7 +268,7 @@ export default function DateRangePicker({
           <button
             type="button"
             onClick={onClear}
-            className="text-xs text-gray-500 hover:text-gray-700 underline"
+            className="text-xs text-gray-500 hover:text-gray-700 underline dark:text-gray-400 dark:hover:text-gray-200"
           >
             Clear
           </button>
@@ -283,7 +283,7 @@ export default function DateRangePicker({
               key={preset.label}
               type="button"
               onClick={() => handlePresetSelect(preset)}
-              className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
             >
               {preset.label}
             </button>
@@ -299,10 +299,10 @@ export default function DateRangePicker({
             value={from || ''}
             onChange={(e) => onFromChange(e.target.value || null)}
             placeholder="Start date"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-400"
           />
         </div>
-        <span className="text-gray-400">to</span>
+        <span className="text-gray-400 dark:text-gray-500">to</span>
         <div className="flex-1">
           <input
             type="date"
@@ -310,7 +310,7 @@ export default function DateRangePicker({
             onChange={(e) => onToChange(e.target.value || null)}
             min={from || undefined}
             placeholder="End date"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-400"
           />
         </div>
       </div>

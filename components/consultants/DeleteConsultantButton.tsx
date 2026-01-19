@@ -12,7 +12,7 @@ export default function DeleteConsultantButton({ consultantId, onDelete }: Delet
   const [isPending, startTransition] = useTransition()
 
   const handleClick = () => {
-    if (!confirm('Are you sure you want to delete this consultant? Projects assigned to this consultant will remain but lose their consultant association.')) {
+    if (!confirm('Are you sure you want to delete this consultant? Vessels assigned to this consultant will remain but lose their consultant association.')) {
       return
     }
 

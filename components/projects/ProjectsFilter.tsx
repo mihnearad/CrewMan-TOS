@@ -116,7 +116,7 @@ export default function ProjectsFilter({
         {hasFilters && (
           <button
             onClick={handleClearAll}
-            className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 underline self-center"
+            className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 underline self-center dark:text-gray-400 dark:hover:text-gray-200"
           >
             Clear all filters
           </button>

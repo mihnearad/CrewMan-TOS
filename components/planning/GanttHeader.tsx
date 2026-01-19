@@ -25,11 +25,13 @@ export default function GanttHeader({
 
   return (
     <div className="flex border-b bg-gray-50 sticky top-0 z-10">
-      {/* Spacer for sidebar */}
-      <div
-        className="flex-shrink-0 border-r bg-gray-100"
-        style={{ width: sidebarWidth }}
-      />
+      {/* Spacer for sidebar (only if sidebarWidth > 0) */}
+      {sidebarWidth > 0 && (
+        <div
+          className="flex-shrink-0 border-r bg-gray-100"
+          style={{ width: sidebarWidth }}
+        />
+      )}
 
       {/* Time scale columns */}
       <div className="flex">
@@ -39,13 +41,13 @@ export default function GanttHeader({
           return (
             <div
               key={idx}
-              className={`flex-shrink-0 border-r text-center py-2 ${
+              className={`flex-shrink-0 border-r text-center py-1 ${
                 isCurrentDay ? 'bg-blue-50' : ''
               }`}
               style={{ width: pixelsPerUnit }}
             >
               <div
-                className={`text-xs font-medium ${
+                className={`text-[10px] font-medium ${
                   isCurrentDay ? 'text-blue-600' : 'text-gray-700'
                 }`}
               >
@@ -53,7 +55,7 @@ export default function GanttHeader({
               </div>
               {column.subLabel && (
                 <div
-                  className={`text-xs ${
+                  className={`text-[9px] ${
                     isCurrentDay ? 'text-blue-500' : 'text-gray-500'
                   }`}
                 >

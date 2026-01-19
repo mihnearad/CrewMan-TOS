@@ -254,10 +254,10 @@ export default function EditAssignmentModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          {/* Project info (read-only) */}
+          {/* Vessel info (read-only) */}
           <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Project
+              Vessel
             </label>
             <div className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 flex items-center gap-2">
               <div
@@ -268,13 +268,13 @@ export default function EditAssignmentModal({
             </div>
           </div>
 
-          {/* Role on project */}
+          {/* Role onboard */}
           <div className="mb-5">
             <label
               htmlFor="roleOnProject"
               className="block text-sm font-medium text-gray-700 mb-1.5"
             >
-              Role on Project
+              Role Onboard
             </label>
             <input
               type="text"

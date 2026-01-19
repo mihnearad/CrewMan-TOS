@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react'
 
 export default function DeleteProjectButton({ onDelete }: { onDelete: () => void }) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!confirm('Are you sure you want to delete this project?')) {
+    if (!confirm('Are you sure you want to delete this vessel?')) {
       e.preventDefault()
     }
   }

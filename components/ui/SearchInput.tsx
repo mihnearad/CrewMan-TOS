@@ -3,7 +3,7 @@
  * 
  * Reusable search input with consistent styling across the application.
  * Features search icon, clear button, optional keyboard shortcut hint,
- * and proper accessibility attributes.
+ * and proper accessibility attributes. Supports dark mode.
  * 
  * @example
  * ```tsx
@@ -116,7 +116,7 @@ export default function SearchInput({
       {/* Search Icon */}
       <Search 
         className={cn(
-          'absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none',
+          'absolute top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none',
           iconSizeClasses[size],
           iconPositionClasses[size]
         )} 
@@ -133,9 +133,11 @@ export default function SearchInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         className={cn(
-          'w-full border border-gray-300 rounded-lg',
+          'w-full border border-gray-300 dark:border-gray-600 rounded-lg',
+          'bg-white dark:bg-gray-800',
+          'text-gray-900 dark:text-gray-100',
           'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-          'placeholder:text-gray-400',
+          'placeholder:text-gray-400 dark:placeholder:text-gray-500',
           'transition-colors duration-150',
           sizeClasses[size]
         )}
@@ -147,7 +149,7 @@ export default function SearchInput({
           type="button"
           onClick={handleClear}
           className={cn(
-            'absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
+            'absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300',
             'transition-colors duration-150',
             clearPositionClasses[size]
           )}
@@ -160,8 +162,8 @@ export default function SearchInput({
           className={cn(
             'absolute top-1/2 -translate-y-1/2 hidden sm:inline-flex',
             'items-center gap-1 px-1.5 py-0.5 rounded',
-            'bg-gray-100 text-gray-500 text-xs font-mono',
-            'border border-gray-200',
+            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-mono',
+            'border border-gray-200 dark:border-gray-600',
             clearPositionClasses[size]
           )}
         >

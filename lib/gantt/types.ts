@@ -14,6 +14,10 @@ export interface GanttAssignment {
     id: string
     full_name: string
     role: string
+    nationality?: string
+    flag_state?: string
+    home_airport?: string
+    company?: string
   }
 }
 
@@ -30,6 +34,10 @@ export interface GanttCrewMember {
   full_name: string
   role: string
   status: string
+  nationality?: string
+  flag_state?: string
+  home_airport?: string
+  company?: string
 }
 
 export interface GanttItem {
@@ -46,6 +54,19 @@ export interface GanttRow {
   sublabel?: string
   color?: string
   items: GanttItem[]
+  /** Whether this row is a group header (vessel header in vessel view) */
+  isGroupHeader?: boolean
+  /** Parent group ID (vessel ID for crew rows in vessel view) */
+  parentGroupId?: string
+  /** Crew member ID for linking to crew profile */
+  crewMemberId?: string
+  /** Additional crew details for display in sidebar */
+  crewDetails?: {
+    nationality?: string
+    flag_state?: string
+    home_airport?: string
+    company?: string
+  }
 }
 
 export type GanttViewMode = 'by-crew' | 'by-project'

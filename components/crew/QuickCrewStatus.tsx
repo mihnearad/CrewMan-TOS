@@ -12,7 +12,7 @@ interface QuickCrewStatusProps {
 
 const statuses = [
   { value: 'available', label: 'Available', bgColor: 'bg-green-100', textColor: 'text-green-800' },
-  { value: 'on_project', label: 'On Project', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
+  { value: 'on_project', label: 'Onboard', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
   { value: 'on_leave', label: 'On Leave', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800' },
 ]
 

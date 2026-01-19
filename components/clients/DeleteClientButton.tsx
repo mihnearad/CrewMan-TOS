@@ -12,7 +12,7 @@ export default function DeleteClientButton({ clientId, onDelete }: DeleteClientB
   const [isPending, startTransition] = useTransition()
 
   const handleClick = () => {
-    if (!confirm('Are you sure you want to delete this client? Projects associated with this client will remain but lose their client association.')) {
+    if (!confirm('Are you sure you want to delete this client? Vessels associated with this client will remain but lose their client association.')) {
       return
     }
 

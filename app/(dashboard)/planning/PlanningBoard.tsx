@@ -26,7 +26,7 @@ import PlanningFilters from '@/components/planning/PlanningFilters'
 // Lazy load heavy GanttView component
 const GanttView = dynamic(() => import('@/components/planning/GanttView'), {
   loading: () => (
-    <div className="flex items-center justify-center h-64 bg-white rounded-lg border">
+    <div className="flex items-center justify-center h-64 bg-white rounded-lg border dark:bg-gray-900 dark:border-gray-700">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
     </div>
   ),
@@ -57,6 +57,10 @@ interface CrewMember {
   full_name: string
   role: string
   status: string
+  nationality?: string
+  flag_state?: string
+  home_airport?: string
+  company?: string
 }
 
 interface PlanningBoardProps {
@@ -70,7 +74,7 @@ export default function PlanningBoard({
   initialCrew,
   initialAssignments
 }: PlanningBoardProps) {
-  const [view, setView] = useState<'calendar' | 'timeline' | 'gantt'>('timeline')
+  const [view, setView] = useState<'calendar' | 'timeline' | 'gantt'>('gantt')
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [selectedCrew, setSelectedCrew] = useState<string>('')
@@ -217,8 +221,8 @@ export default function PlanningBoard({
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Planning</h2>
-          <p className="text-sm text-gray-600">Assign crew to projects</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Planning</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Assign crew to vessels</p>
         </div>
 
         <div className="flex gap-3">
@@ -228,7 +232,7 @@ export default function PlanningBoard({
               className={`px-4 py-2 text-sm font-medium border ${
                 view === 'timeline'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
               } rounded-l-md`}
             >
               Timeline
@@ -238,7 +242,7 @@ export default function PlanningBoard({
               className={`px-4 py-2 text-sm font-medium border-t border-b border-r ${
                 view === 'calendar'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
               }`}
             >
               Calendar
@@ -248,7 +252,7 @@ export default function PlanningBoard({
               className={`px-4 py-2 text-sm font-medium border-t border-b border-r ${
                 view === 'gantt'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
               } rounded-r-md`}
             >
               <BarChart3 className="inline h-4 w-4 mr-1" />
@@ -258,7 +262,7 @@ export default function PlanningBoard({
 
           <button
             onClick={() => setShowAssignModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Assignment
@@ -286,7 +290,7 @@ export default function PlanningBoard({
 
       {/* Filter results summary */}
       {hasFilters && (
-        <div className="mb-4 text-sm text-gray-600">
+        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
           Showing {filteredAssignments.length} of {initialAssignments.length} assignments
         </div>
       )}
@@ -300,22 +304,22 @@ export default function PlanningBoard({
             )
 
             return (
-              <div key={project.id} className="bg-white shadow rounded-lg p-4">
+              <div key={project.id} className="bg-white shadow rounded-lg p-4 dark:bg-gray-900 dark:shadow-gray-900/30">
                 <div className="flex items-center mb-4">
                   <div
                     className="w-4 h-4 rounded mr-3"
                     style={{ backgroundColor: project.color }}
                   />
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {project.name}
                   </h3>
-                  <span className="ml-auto text-sm text-gray-500">
+                  <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
                     {projectAssignments.length} assigned
                   </span>
                 </div>
 
                 {projectAssignments.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">No crew assigned</p>
+                  <p className="text-sm text-gray-500 italic dark:text-gray-400">No crew assigned</p>
                 ) : (
                   <div className="space-y-2">
                     {projectAssignments.map(assignment => {
@@ -328,32 +332,32 @@ export default function PlanningBoard({
                           className={`flex items-center justify-between p-3 rounded border ${statusClasses}`}
                         >
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-gray-900 dark:text-white">
                               {assignment.crew_member.full_name}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               {assignment.role_on_project || assignment.crew_member.role}
                             </p>
                           </div>
                           <div className="flex items-center gap-4">
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
                               <CalendarIcon className="inline h-4 w-4 mr-1" />
                               {format(new Date(assignment.start_date), 'MMM d')} -{' '}
                               {format(new Date(assignment.end_date), 'MMM d, yyyy')}
                             </div>
                             {status === 'ending-critical' && (
-                              <span className="text-xs font-medium text-red-700">
+                              <span className="text-xs font-medium text-red-700 dark:text-red-400">
                                 Ending in {differenceInDays(new Date(assignment.end_date), new Date())} days
                               </span>
                             )}
                             {status === 'ending-soon' && (
-                              <span className="text-xs font-medium text-yellow-700">
+                              <span className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
                                 Ending soon
                               </span>
                             )}
                             <button
                               onClick={() => handleRemove(assignment.id)}
-                              className="p-1 text-gray-400 hover:text-red-600"
+                              className="p-1 text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
                               disabled={loading}
                             >
                               <X className="h-4 w-4" />
@@ -372,30 +376,30 @@ export default function PlanningBoard({
 
       {/* Calendar View */}
       {view === 'calendar' && (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-white shadow rounded-lg overflow-hidden dark:bg-gray-900 dark:shadow-gray-900/30">
           {/* Calendar Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
             <button
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors dark:hover:bg-gray-800"
             >
-              <ChevronLeft className="h-5 w-5 text-gray-600" />
+              <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </button>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {format(currentMonth, 'MMMM yyyy')}
             </h3>
             <button
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors dark:hover:bg-gray-800"
             >
-              <ChevronRight className="h-5 w-5 text-gray-600" />
+              <ChevronRight className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
 
           {/* Day Headers */}
-          <div className="grid grid-cols-7 border-b bg-gray-50">
+          <div className="grid grid-cols-7 border-b bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="px-2 py-3 text-center text-sm font-medium text-gray-700">
+              <div key={day} className="px-2 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
                 {day}
               </div>
             ))}
@@ -411,16 +415,16 @@ export default function PlanningBoard({
               return (
                 <div
                   key={idx}
-                  className={`min-h-[120px] border-b border-r p-1 ${
-                    !isCurrentMonth ? 'bg-gray-50' : 'bg-white'
+                  className={`min-h-[120px] border-b border-r p-1 dark:border-gray-700 ${
+                    !isCurrentMonth ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900'
                   } ${idx % 7 === 0 ? 'border-l' : ''}`}
                 >
                   <div className={`text-sm font-medium mb-1 px-1 ${
                     isToday
                       ? 'bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center'
                       : isCurrentMonth
-                        ? 'text-gray-900'
-                        : 'text-gray-400'
+                        ? 'text-gray-900 dark:text-white'
+                        : 'text-gray-400 dark:text-gray-500'
                   }`}>
                     {format(day, 'd')}
                   </div>
@@ -438,13 +442,13 @@ export default function PlanningBoard({
                         <div className="font-medium truncate" style={{ color: assignment.project.color }}>
                           {assignment.project.name}
                         </div>
-                        <div className="text-gray-600 truncate">
+                        <div className="text-gray-600 truncate dark:text-gray-400">
                           {assignment.crew_member.full_name}
                         </div>
                       </div>
                     ))}
                     {dayAssignments.length > 2 && (
-                      <div className="text-xs text-gray-500 px-1">
+                      <div className="text-xs text-gray-500 px-1 dark:text-gray-400">
                         +{dayAssignments.length - 2} more
                       </div>
                     )}
@@ -472,28 +476,28 @@ export default function PlanningBoard({
 
       {/* Assignment Modal */}
       {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Create Assignment</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 dark:bg-gray-800 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-semibold mb-4 dark:text-white">Create Assignment</h3>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400">
                 {error}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Project
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                  Vessel
                 </label>
                 <select
                   value={selectedProject}
                   onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   disabled={loading}
                 >
-                  <option value="">Select project...</option>
+                  <option value="">Select vessel...</option>
                   {activeProjects.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -501,13 +505,13 @@ export default function PlanningBoard({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
                   Crew Member
                 </label>
                 <select
                   value={selectedCrew}
                   onChange={(e) => setSelectedCrew(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   disabled={loading}
                 >
                   <option value="">Select crew member...</option>
@@ -520,27 +524,27 @@ export default function PlanningBoard({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   disabled={loading}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full border border-gray-300 rounded-md p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   disabled={loading}
                 />
               </div>
@@ -556,14 +560,14 @@ export default function PlanningBoard({
                   setStartDate('')
                   setEndDate('')
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 disabled={loading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleAssign}
-                className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400"
                 disabled={loading}
               >
                 {loading ? 'Creating...' : 'Create Assignment'}

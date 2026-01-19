@@ -36,15 +36,17 @@ export default function GanttItem({
   const crewMember = item.assignment.crew_member
 
   // Display different info based on view mode
-  const primaryText = viewMode === 'by-crew' ? project.name : crewMember.full_name
+  // In vessel view, show the date range since crew member name is in sidebar
+  // In crew view, show the vessel name since crew member name is in sidebar
+  const primaryText = viewMode === 'by-crew' ? project.name : formatDateRange(item.start, item.end)
   const color = project.color
 
   const style: React.CSSProperties = {
     position: 'absolute',
     left: left,
-    width: Math.max(width, 30), // Minimum width
+    width: Math.max(width, 24), // Minimum width (smaller for compact view)
     transform: CSS.Translate.toString(transform),
-    backgroundColor: hasConflict ? '#fef2f2' : color + '20',
+    backgroundColor: hasConflict ? '#fecaca' : color + '90',
     borderLeft: `3px solid ${hasConflict ? '#ef4444' : color}`,
     opacity: isDragging ? 0.8 : 1,
     cursor: isDragging ? 'grabbing' : 'grab',
@@ -60,9 +62,9 @@ export default function GanttItem({
   return (
     <div
       ref={setNodeRef}
-      className={`absolute top-1 bottom-1 rounded-r flex items-center px-2 text-xs select-none transition-shadow ${
+      className={`absolute top-0.5 bottom-0.5 rounded-r flex items-center px-1 text-[10px] select-none transition-shadow ${
         isDragging ? 'shadow-lg' : 'hover:shadow-md'
-      } ${hasConflict ? 'ring-2 ring-red-400' : ''}`}
+      } ${hasConflict ? 'ring-1 ring-red-400' : ''}`}
       style={style}
       title={`${crewMember.full_name} - ${project.name}\n${formatDateRange(item.start, item.end)}`}
       {...listeners}
@@ -70,27 +72,27 @@ export default function GanttItem({
     >
       {/* Left resize handle */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-gray-400/30"
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30"
         onMouseDown={(e) => handleMouseDown(e, 'start')}
       />
 
       {/* Content */}
       <div className="flex-1 min-w-0 truncate">
-        <span className="font-medium" style={{ color: hasConflict ? '#ef4444' : color }}>
+        <span className="font-semibold text-white drop-shadow-sm">
           {primaryText}
         </span>
       </div>
 
       {/* Right resize handle */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-gray-400/30"
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-gray-400/30"
         onMouseDown={(e) => handleMouseDown(e, 'end')}
       />
 
       {/* Conflict indicator */}
       {hasConflict && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-          <span className="text-white text-[8px] font-bold">!</span>
+        <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full flex items-center justify-center">
+          <span className="text-white text-[7px] font-bold">!</span>
         </div>
       )}
     </div>

@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import SidebarClient from '@/components/SidebarClient'
+import Header from '@/components/layout/Header'
 import { createClient } from '@/lib/supabase/server'
-import { LogOut, User } from 'lucide-react'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import ClientProviders from '@/components/providers/ClientProviders'
 
@@ -26,27 +25,11 @@ export default async function DashboardLayout({
   return (
     <ClientProviders>
       <ToastProvider>
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
           <SidebarClient />
           <div className="flex flex-1 flex-col overflow-hidden">
-            <header className="flex h-16 items-center justify-end bg-white px-6 shadow">
-                <div className="flex items-center gap-4">
-                  <Link
-                    href="/profile"
-                    className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                  <form action={signout}>
-                    <button className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
-                    </button>
-                  </form>
-                </div>
-            </header>
-            <main className="flex-1 overflow-y-auto p-6">
+            <Header signoutAction={signout} />
+            <main className="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-gray-950">
               {children}
             </main>
           </div>
