@@ -218,14 +218,16 @@ export default function GanttView({
   }, [])
 
   return (
-    <div className="bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden border border-slate-200/60 dark:border-gray-700">
-      <GanttControls
-        viewMode={viewMode}
-        zoomLevel={zoomLevel}
-        onViewModeChange={setViewMode}
-        onZoomChange={setZoomLevel}
-        onNavigate={handleNavigate}
-      />
+    <div className="bg-white dark:bg-gray-900 shadow-sm rounded-xl overflow-hidden border border-slate-200/60 dark:border-gray-700 print:shadow-none print:rounded-none print:border-0 print:overflow-visible">
+      <div className="print:hidden">
+        <GanttControls
+          viewMode={viewMode}
+          zoomLevel={zoomLevel}
+          onViewModeChange={setViewMode}
+          onZoomChange={setZoomLevel}
+          onNavigate={handleNavigate}
+        />
+      </div>
 
       {isUpdating && (
         <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 flex items-center justify-center z-50">
@@ -242,15 +244,15 @@ export default function GanttView({
         {/* Main scrollable container - horizontal scroll for everything */}
         <div
           ref={scrollContainerRef}
-          className="overflow-x-auto overflow-y-auto"
+          className="overflow-x-auto overflow-y-auto print:overflow-visible"
           style={{ maxHeight: 'calc(100vh - 300px)' }}
         >
           <div style={{ width: SIDEBAR_WIDTH + timelineWidth, minWidth: '100%' }}>
             {/* Header Row */}
-            <div className="flex sticky top-0 z-10">
+            <div className="flex sticky top-0 z-10 print:static print:z-auto print:flex">
               {/* Sidebar header with column labels */}
               <div 
-                className="flex-shrink-0 sticky left-0 z-20 flex items-center px-2.5 gap-1 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-850 border-b border-slate-200/60 dark:border-gray-700 border-r-2 border-r-slate-300 dark:border-r-gray-600"
+                className="flex-shrink-0 sticky left-0 z-20 flex items-center px-2.5 gap-1 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-850 border-b border-slate-200/60 dark:border-gray-700 border-r-2 border-r-slate-300 dark:border-r-gray-600 print:static print:z-auto print:bg-gray-100"
                 style={{ 
                   width: SIDEBAR_WIDTH, 
                   height: HEADER_HEIGHT,
@@ -282,7 +284,7 @@ export default function GanttView({
             <div className="flex">
               {/* Sidebar - sticky left with clear border separator */}
               <div 
-                className="flex-shrink-0 sticky left-0 z-10 bg-white dark:bg-gray-900 border-r-2 border-r-slate-300 dark:border-r-gray-600"
+                className="flex-shrink-0 sticky left-0 z-10 bg-white dark:bg-gray-900 border-r-2 border-r-slate-300 dark:border-r-gray-600 print:static print:z-auto"
                 style={{ 
                   width: SIDEBAR_WIDTH,
                   boxShadow: '2px 0 8px -2px rgba(0,0,0,0.1)',
@@ -325,7 +327,7 @@ export default function GanttView({
       {/* Legend for conflict indicator */}
       {conflictingItems.size > 0 && (
         <div 
-          className="px-5 py-2.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-2.5 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/30 dark:to-rose-900/30 border-t border-red-200/60 dark:border-red-800/60"
+          className="px-5 py-2.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-2.5 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/30 dark:to-rose-900/30 border-t border-red-200/60 dark:border-red-800/60 print:hidden"
         >
           <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
           <span className="font-medium">Conflict detected - this crew member is already assigned during this period</span>
@@ -333,20 +335,22 @@ export default function GanttView({
       )}
 
       {/* Crew Detail Modal */}
-      <CrewDetailModal
-        crewMemberId={selectedCrewMemberId || ''}
-        isOpen={!!selectedCrewMemberId}
-        onClose={() => setSelectedCrewMemberId(null)}
-      />
+      <div className="print:hidden">
+        <CrewDetailModal
+          crewMemberId={selectedCrewMemberId || ''}
+          isOpen={!!selectedCrewMemberId}
+          onClose={() => setSelectedCrewMemberId(null)}
+        />
 
-      {/* Edit Assignment Modal */}
-      <EditAssignmentModal
-        assignment={editingAssignment?.assignment as any}
-        isOpen={!!editingAssignment}
-        onClose={() => setEditingAssignment(null)}
-        onSuccess={handleEditSuccess}
-        roles={roles}
-      />
+        {/* Edit Assignment Modal */}
+        <EditAssignmentModal
+          assignment={editingAssignment?.assignment as any}
+          isOpen={!!editingAssignment}
+          onClose={() => setEditingAssignment(null)}
+          onSuccess={handleEditSuccess}
+          roles={roles}
+        />
+      </div>
     </div>
   )
 }

@@ -42,7 +42,7 @@ export default function SidebarClient() {
   }
   
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900 text-white">
+    <div className="flex h-full w-64 flex-col bg-gray-900 text-white print:hidden" data-sidebar>
       {/* Logo */}
       <div className="flex flex-col items-center justify-center gap-2 border-b border-gray-800 py-4">
         <Image src="/Logo.png" alt="CrewMan TOS Logo" width={80} height={80} priority />

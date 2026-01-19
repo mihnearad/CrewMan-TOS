@@ -115,7 +115,7 @@ export default function PlanningFilters({
   )
   
   return (
-    <div className="bg-white rounded-lg border border-gray-200 mb-4 dark:bg-gray-900 dark:border-gray-700">
+    <div className="bg-white rounded-lg border border-gray-200 mb-4 dark:bg-gray-900 dark:border-gray-700 print:hidden">
       {/* Filter Header (always visible) */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">

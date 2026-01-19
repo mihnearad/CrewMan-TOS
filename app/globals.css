@@ -155,3 +155,97 @@ html {
 html.dark {
   color-scheme: dark;
 }
+
+/**
+ * Print Styles for PDF Export
+ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  html, body {
+    background: white !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+  }
+
+  /* Hide sidebar, header, buttons, modals during print */
+  .print\:hidden,
+  [data-sidebar],
+  header:not(.print-header),
+  nav,
+  aside,
+  footer,
+  button,
+  [role="dialog"],
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Reset main layout wrapper */
+  body > div {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Reset flex containers within main content area */
+  main {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Make print content visible and full-width */
+  [data-printing="true"] {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: white !important;
+    padding: 10px !important;
+    overflow: visible !important;
+  }
+
+  /* Show print header */
+  .print\:block,
+  .print-header {
+    display: block !important;
+  }
+
+  /* Gantt chart specific - keep flex layout but remove restrictions */
+  [data-printing="true"] .overflow-x-auto,
+  [data-printing="true"] .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Remove sticky positioning */
+  .print\:static {
+    position: static !important;
+  }
+
+  .print\:z-auto {
+    z-index: auto !important;
+  }
+
+  .print\:overflow-visible {
+    overflow: visible !important;
+  }
+
+  /* Preserve background colors for chart elements */
+  [style*="background-color"],
+  [style*="background:"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

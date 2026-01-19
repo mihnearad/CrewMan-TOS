@@ -227,8 +227,10 @@ export default function PlanningBoard({
     setIsPrinting(true)
     setGeneratedAt(format(new Date(), 'MMM d, yyyy h:mm a'))
     try {
+      // Wait for React to render the updated state
+      await new Promise<void>(resolve => setTimeout(resolve, 100))
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-      await exportPdf(printRef.current, { filename: 'planning-report.pdf' })
+      await exportPdf(printRef.current)
     } finally {
       setGeneratedAt(null)
       setIsPrinting(false)
@@ -322,8 +324,8 @@ export default function PlanningBoard({
   }
 
   return (
-    <div className="p-3">
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-3 print:p-0">
+      <div className="flex justify-between items-center mb-4 print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Planning</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">Assign crew to vessels</p>
@@ -406,12 +408,12 @@ export default function PlanningBoard({
 
       {/* Filter results summary */}
       {hasFilters && (
-        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 print:hidden">
           Showing {filteredAssignments.length} of {initialAssignments.length} assignments
         </div>
       )}
 
-      <div ref={printRef} className="bg-white p-4 rounded-lg">
+      <div ref={printRef} className="bg-white p-4 rounded-lg print:p-0 print:shadow-none print:rounded-none">
         <PrintHeader filterSummary={filterSummary} generatedAt={generatedAt || undefined} />
         {/* Timeline View */}
         {view === 'timeline' && (

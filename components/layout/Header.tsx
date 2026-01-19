@@ -18,7 +18,7 @@ interface HeaderProps {
 
 export default function Header({ signoutAction }: HeaderProps) {
   return (
-    <header className="flex h-16 items-center justify-end bg-white dark:bg-gray-900 px-6 shadow dark:shadow-gray-900/20 border-b border-transparent dark:border-gray-800">
+    <header className="flex h-16 items-center justify-end bg-white dark:bg-gray-900 px-6 shadow dark:shadow-gray-900/20 border-b border-transparent dark:border-gray-800 print:hidden">
       <div className="flex items-center gap-4">
         {/* Theme Toggle */}
         <ThemeToggle />
