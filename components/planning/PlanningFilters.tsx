@@ -145,12 +145,13 @@ export default function PlanningFilters({
   
   return (
     <div className="bg-white rounded-lg border border-gray-200 mb-4 dark:bg-gray-900 dark:border-gray-700 print:hidden">
-      {/* Filter Header (always visible) - clickable to expand/collapse */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors rounded-lg"
-      >
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      {/* Filter Header (always visible) */}
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Left side - clickable to expand/collapse */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+        >
           <Filter className="h-4 w-4" />
           Filters
           {hasFilters && (
@@ -163,15 +164,19 @@ export default function PlanningFilters({
               {filterSummary}
             </span>
           )}
-        </div>
+          <ChevronDown 
+            className={cn(
+              "h-4 w-4 text-gray-400 transition-transform duration-200",
+              isExpanded && "rotate-180"
+            )} 
+          />
+        </button>
         
+        {/* Right side - quick actions */}
         <div className="flex items-center gap-2">
           {/* Quick filter: Ending Soon */}
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEndingSoonToggle()
-            }}
+            onClick={onEndingSoonToggle}
             className={cn(
               'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-all',
               endingSoon
@@ -186,26 +191,15 @@ export default function PlanningFilters({
           {/* Clear All */}
           {hasFilters && (
             <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onClearAll()
-              }}
+              onClick={onClearAll}
               className="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               <X className="h-3.5 w-3.5" />
               Clear
             </button>
           )}
-          
-          {/* Expand/Collapse indicator */}
-          <ChevronDown 
-            className={cn(
-              "h-4 w-4 text-gray-400 transition-transform duration-200",
-              isExpanded && "rotate-180"
-            )} 
-          />
         </div>
-      </button>
+      </div>
       
       {/* Collapsible filter content */}
       <div className={cn(
