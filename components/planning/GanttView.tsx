@@ -49,7 +49,7 @@ interface GanttViewProps {
 }
 
 const ROW_HEIGHT = 32
-const HEADER_HEIGHT = 36
+export const HEADER_HEIGHT = 40
 const SIDEBAR_WIDTH = 420
 
 export default function GanttView({

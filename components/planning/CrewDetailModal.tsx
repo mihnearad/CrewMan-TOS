@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Mail, Phone, User, Flag, Plane, Building2, Globe, Calendar, ExternalLink } from 'lucide-react'
+import { X, Mail, Phone, User, Plane, Globe, Calendar, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { computeCrewDisplayStatus, getCrewStatusDisplay } from '@/lib/utils'
@@ -14,9 +14,7 @@ interface CrewMember {
   email?: string
   phone?: string
   nationality?: string
-  flag_state?: string
   home_airport?: string
-  company?: string
 }
 
 interface Assignment {
@@ -153,7 +151,7 @@ export default function CrewDetailModal({
               )}
 
               {/* Additional Details */}
-              {(crewMember.nationality || crewMember.flag_state || crewMember.home_airport || crewMember.company) && (
+              {(crewMember.nationality || crewMember.home_airport) && (
                 <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   {crewMember.nationality && (
                     <div className="flex items-center gap-2">
@@ -164,30 +162,12 @@ export default function CrewDetailModal({
                       </div>
                     </div>
                   )}
-                  {crewMember.flag_state && (
-                    <div className="flex items-center gap-2">
-                      <Flag className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                      <div>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Flag State</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white font-mono">{crewMember.flag_state}</p>
-                      </div>
-                    </div>
-                  )}
                   {crewMember.home_airport && (
                     <div className="flex items-center gap-2">
                       <Plane className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       <div>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Home Airport</p>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{crewMember.home_airport}</p>
-                      </div>
-                    </div>
-                  )}
-                  {crewMember.company && (
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                      <div>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Company</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{crewMember.company}</p>
                       </div>
                     </div>
                   )}
@@ -204,7 +184,7 @@ export default function CrewDetailModal({
                   <p className="text-sm text-gray-500 dark:text-gray-400 italic">No assignments</p>
                 ) : (
                   <div className="space-y-2">
-                    {assignments.slice(0, 5).map((assignment) => (
+                    {assignments.filter(a => a.project).slice(0, 5).map((assignment) => (
                       <div
                         key={assignment.id}
                         className="flex items-center gap-3 p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
@@ -223,9 +203,9 @@ export default function CrewDetailModal({
                         </div>
                       </div>
                     ))}
-                    {assignments.length > 5 && (
+                    {assignments.filter(a => a.project).length > 5 && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                        +{assignments.length - 5} more assignments
+                        +{assignments.filter(a => a.project).length - 5} more assignments
                       </p>
                     )}
                   </div>

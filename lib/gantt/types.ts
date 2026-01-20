@@ -18,9 +18,7 @@ export interface GanttAssignment {
     full_name: string
     role: string
     nationality?: string
-    flag_state?: string
     home_airport?: string
-    company?: string
   }
 }
 
@@ -44,9 +42,7 @@ export interface GanttCrewMember {
   role: string
   status: string
   nationality?: string
-  flag_state?: string
   home_airport?: string
-  company?: string
 }
 
 export interface GanttItem {
@@ -76,9 +72,7 @@ export interface GanttRow {
   /** Additional crew details for display in sidebar */
   crewDetails?: {
     nationality?: string
-    flag_state?: string
     home_airport?: string
-    company?: string
   }
 }
 

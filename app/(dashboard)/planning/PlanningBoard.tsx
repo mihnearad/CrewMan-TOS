@@ -62,9 +62,7 @@ interface CrewMember {
   role: string
   status: string
   nationality?: string
-  flag_state?: string
   home_airport?: string
-  company?: string
 }
 
 interface Role {

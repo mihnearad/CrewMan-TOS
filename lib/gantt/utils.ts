@@ -36,7 +36,7 @@ export function getPixelsPerUnit(zoomLevel: GanttZoomLevel): number {
     case 'week':
       return 120
     case 'month':
-      return 200
+      return 240 // Increased width for month view to avoid squashing content
     default:
       return 40
   }
@@ -66,6 +66,9 @@ export function getItemPosition(
       }
     case 'month':
       return {
+        // Average month is 30.44 days, using 30 for simplicity but might cause drift
+        // Better to use differenceInMonths + fractional part?
+        // Let's stick to days but scale by pixelsPerUnit / 30 for now
         left: (daysFromStart / 30) * pixelsPerUnit,
         width: (durationDays / 30) * pixelsPerUnit - 4,
       }
@@ -88,6 +91,7 @@ export function getDateFromPosition(
     case 'week':
       return addDays(timeRange.start, Math.floor((pixelX / pixelsPerUnit) * 7))
     case 'month':
+      // Approximate 30 days per month unit
       return addDays(timeRange.start, Math.floor((pixelX / pixelsPerUnit) * 30))
     default:
       return timeRange.start
@@ -150,9 +154,7 @@ export function assignmentsToRows(
         crewMemberId: crew.id,
         crewDetails: {
           nationality: crew.nationality,
-          flag_state: crew.flag_state,
           home_airport: crew.home_airport,
-          company: crew.company,
         },
         items: crewAssignments.map(a => ({
           id: a.id,
@@ -248,9 +250,7 @@ export function assignmentsToRows(
               crewMemberId: crewId,
               crewDetails: {
                 nationality: crewMember.nationality,
-                flag_state: crewMember.flag_state,
                 home_airport: crewMember.home_airport,
-                company: crewMember.company,
               },
               items: crewAssignments.map(a => ({
                 id: a.id,
@@ -295,9 +295,7 @@ export function assignmentsToRows(
             crewMemberId: crewId,
             crewDetails: {
               nationality: crewMember.nationality,
-              flag_state: crewMember.flag_state,
               home_airport: crewMember.home_airport,
-              company: crewMember.company,
             },
             items: crewAssignments.map(a => ({
               id: a.id,
@@ -342,9 +340,7 @@ export function assignmentsToRows(
           crewMemberId: crewId,
           crewDetails: {
             nationality: crewMember.nationality,
-            flag_state: crewMember.flag_state,
             home_airport: crewMember.home_airport,
-            company: crewMember.company,
           },
           items: crewTraining.map(a => ({
             id: a.id,
@@ -364,8 +360,8 @@ export function assignmentsToRows(
 // Get default time range (current month +/- buffer)
 export function getDefaultTimeRange(): GanttTimeRange {
   const today = new Date()
-  const start = addDays(startOfMonth(today), -14)
-  const end = addDays(endOfMonth(addMonths(today, 2)), 14)
+  const start = addDays(startOfMonth(addMonths(today, -1)), 0)
+  const end = addDays(endOfMonth(addMonths(today, 12)), 0)
   return { start, end }
 }
 
@@ -384,8 +380,8 @@ export function navigateTimeRange(
   switch (zoomLevel) {
     case 'day':
       return {
-        start: addWeeks(current.start, multiplier),
-        end: addWeeks(current.end, multiplier),
+        start: addWeeks(current.start, multiplier * 2), // Move by 2 weeks
+        end: addWeeks(current.end, multiplier * 2),
       }
     case 'week':
       return {
@@ -394,8 +390,8 @@ export function navigateTimeRange(
       }
     case 'month':
       return {
-        start: addMonths(current.start, multiplier * 3),
-        end: addMonths(current.end, multiplier * 3),
+        start: addMonths(current.start, multiplier * 6), // Move by 6 months instead of 3
+        end: addMonths(current.end, multiplier * 6),
       }
     default:
       return current

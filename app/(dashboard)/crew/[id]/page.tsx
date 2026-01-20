@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCrewMemberById, deleteCrewMember } from '@/app/crew/actions'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Pencil, ArrowLeft, Mail, Phone, User, Flag, Plane, Building2, Globe } from 'lucide-react'
+import { Pencil, ArrowLeft, Mail, Phone, User, Plane, Globe } from 'lucide-react'
 import CrewPlanningHub from '@/components/crew/CrewPlanningHub'
 import DeleteCrewButton from '@/components/crew/DeleteCrewButton'
 import type { Assignment } from '@/components/assignments'
@@ -168,7 +168,7 @@ export default async function CrewDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Additional Details */}
-        {(crewMember.nationality || crewMember.flag_state || crewMember.home_airport || crewMember.company) && (
+        {(crewMember.nationality || crewMember.home_airport) && (
           <div className="border-t border-gray-200 px-6 py-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {crewMember.nationality && (
@@ -180,30 +180,12 @@ export default async function CrewDetailPage({ params }: { params: Promise<{ id:
                   </div>
                 </div>
               )}
-              {crewMember.flag_state && (
-                <div className="flex items-center gap-2">
-                  <Flag className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Flag State</p>
-                    <p className="text-sm font-medium text-gray-900 font-mono">{crewMember.flag_state}</p>
-                  </div>
-                </div>
-              )}
               {crewMember.home_airport && (
                 <div className="flex items-center gap-2">
                   <Plane className="h-4 w-4 text-gray-400" />
                   <div>
                     <p className="text-xs text-gray-500">Home Airport</p>
                     <p className="text-sm font-medium text-gray-900">{crewMember.home_airport}</p>
-                  </div>
-                </div>
-              )}
-              {crewMember.company && (
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Company</p>
-                    <p className="text-sm font-medium text-gray-900">{crewMember.company}</p>
                   </div>
                 </div>
               )}

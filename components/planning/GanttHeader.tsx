@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { isToday, isSameWeek, isSameMonth } from 'date-fns'
 import type { GanttZoomLevel, GanttTimeRange } from '@/lib/gantt/types'
 import { getTimeScaleColumns, getPixelsPerUnit } from '@/lib/gantt/utils'
+import { HEADER_HEIGHT } from './GanttView'
 
 interface GanttHeaderProps {
   timeRange: GanttTimeRange
@@ -41,6 +42,7 @@ export default function GanttHeader({
   return (
     <div 
       className="flex sticky top-0 z-10 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-850 border-b border-slate-200/60 dark:border-gray-700"
+      style={{ height: HEADER_HEIGHT }}
     >
       {/* Spacer for sidebar (only if sidebarWidth > 0) */}
       {sidebarWidth > 0 && (
@@ -60,11 +62,12 @@ export default function GanttHeader({
           return (
             <div
               key={idx}
-              className={`flex-shrink-0 text-center py-1.5 border-r border-slate-200/35 dark:border-gray-700/50 ${
+              className={`flex-shrink-0 text-center border-r border-slate-200/35 dark:border-gray-700/50 flex flex-col items-center justify-center ${
                 isCurrent ? 'bg-blue-50/60 dark:bg-blue-900/30' : ''
               }`}
               style={{ 
                 width: pixelsPerUnit,
+                height: HEADER_HEIGHT,
               }}
             >
               <div

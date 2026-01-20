@@ -43,15 +43,22 @@ create table assignments (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- RLS POLICIES (Simple single-org setup: authenticated users can read/write all for now)
+-- Indexes for foreign keys (improves JOIN performance)
+create index idx_assignments_project_id on assignments(project_id);
+create index idx_assignments_crew_member_id on assignments(crew_member_id);
+
+-- RLS POLICIES
+-- NOTE: Using permissive policies (USING true) is intentional for this internal tool.
+-- All authenticated users share access to the same data.
+-- Future: Add user_id to projects/assignments for per-user isolation.
 alter table profiles enable row level security;
 alter table projects enable row level security;
 alter table crew_members enable row level security;
 alter table assignments enable row level security;
 
 create policy "Public profiles are viewable by everyone" on profiles for select using (true);
-create policy "Users can insert their own profile" on profiles for insert with check (auth.uid() = id);
-create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+create policy "Users can insert their own profile" on profiles for insert with check ((select auth.uid()) = id);
+create policy "Users can update own profile" on profiles for update using ((select auth.uid()) = id);
 
 create policy "Authenticated users can view all projects" on projects for select to authenticated using (true);
 create policy "Authenticated users can insert projects" on projects for insert to authenticated with check (true);
@@ -69,14 +76,19 @@ create policy "Authenticated users can update assignments" on assignments for up
 create policy "Authenticated users can delete assignments" on assignments for delete to authenticated using (true);
 
 -- Function to handle new user signup
+-- SET search_path = '' prevents search path manipulation attacks
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
 begin
   insert into public.profiles (id, full_name, role)
   values (new.id, new.raw_user_meta_data->>'full_name', 'planner');
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 -- Trigger for new user signup
 create trigger on_auth_user_created
