@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Anchor, Users, Calendar, ArrowRight, Plus, UserPlus, ClipboardList, AlertTriangle, Building2, UserCog } from 'lucide-react'
+import { Anchor, Users, Calendar, ArrowRight, Plus, UserPlus, ClipboardList, AlertTriangle, Building2, UserCog, Clock } from 'lucide-react'
 import { format, addDays, differenceInDays } from 'date-fns'
 import DashboardPlanningWidget from '@/components/dashboard/DashboardPlanningWidget'
 
@@ -9,6 +9,16 @@ interface EndingAssignment {
   end_date: string
   project: { name: string; color: string }
   crew_member: { id: string; full_name: string }
+}
+
+interface UpcomingAssignment {
+  id: string
+  start_date: string
+  end_date: string
+  project: { name: string; color: string } | null
+  crew_member: { id: string; full_name: string }
+  assignment_type: 'vessel' | 'training' | null
+  training_description: string | null
 }
 
 interface PlanningAssignment {
@@ -59,9 +69,10 @@ export default async function DashboardPage() {
   const today = new Date().toISOString().split('T')[0]
   const sevenDaysFromNow = addDays(new Date(), 7).toISOString().split('T')[0]
 
-  // Fetch data for planning widget and ending assignments in parallel
+  // Fetch data for planning widget, ending and upcoming assignments in parallel
   const [
     { data: endingAssignments },
+    { data: upcomingAssignments },
     { data: planningAssignments },
     { data: projects },
     { data: crewMembers }
@@ -77,6 +88,21 @@ export default async function DashboardPage() {
       .gte('end_date', today)
       .lte('end_date', sevenDaysFromNow)
       .order('end_date', { ascending: true })
+      .limit(5),
+    supabase
+      .from('assignments')
+      .select(`
+        id,
+        start_date,
+        end_date,
+        assignment_type,
+        training_description,
+        project:projects(name, color),
+        crew_member:crew_members(id, full_name)
+      `)
+      .gt('start_date', today)
+      .lte('start_date', sevenDaysFromNow)
+      .order('start_date', { ascending: true })
       .limit(5),
     supabase
       .from('assignments')
@@ -102,6 +128,7 @@ export default async function DashboardPage() {
   ])
 
   const typedEndingAssignments = endingAssignments as EndingAssignment[] | null
+  const typedUpcomingAssignments = upcomingAssignments as UpcomingAssignment[] | null
   const typedPlanningAssignments = planningAssignments as PlanningAssignment[] | null
   const typedProjects = projects as Project[] | null
   const typedCrewMembers = crewMembers as CrewMember[] | null
@@ -281,81 +308,158 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Assignments Ending Soon */}
-      <div className="bg-white shadow rounded-lg overflow-hidden dark:bg-gray-900 dark:shadow-gray-900/30">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Assignments Ending Soon</h3>
+      {/* Assignment Alerts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Upcoming Assignments */}
+        <div className="bg-white shadow rounded-lg overflow-hidden dark:bg-gray-900 dark:shadow-gray-900/30">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <Clock className="h-5 w-5 text-blue-500 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Assignments</h3>
+            </div>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Assignments starting within the next 7 days</p>
           </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Crew assignments ending within the next 7 days</p>
-        </div>
 
-        {!typedEndingAssignments || typedEndingAssignments.length === 0 ? (
-          <div className="px-4 py-8 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">No assignments ending in the next 7 days</p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {typedEndingAssignments.map((assignment) => {
-              const daysUntilEnd = differenceInDays(new Date(assignment.end_date), new Date())
-              const isUrgent = daysUntilEnd <= 3
+          {!typedUpcomingAssignments || typedUpcomingAssignments.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No assignments starting in the next 7 days</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {typedUpcomingAssignments.map((assignment) => {
+                const daysUntilStart = differenceInDays(new Date(assignment.start_date), new Date())
+                const isTraining = assignment.assignment_type === 'training'
+                const assignmentName = isTraining
+                  ? (assignment.training_description || 'Training')
+                  : (assignment.project?.name || 'Unknown project')
+                const assignmentColor = isTraining ? '#F59E0B' : (assignment.project?.color || '#6B7280')
 
-              return (
-                <li key={assignment.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center min-w-0">
-                      <div
-                        className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
-                        style={{ backgroundColor: assignment.project?.color || '#6B7280' }}
-                      />
-                      <div className="min-w-0">
-                        <Link
-                          href={`/crew/${assignment.crew_member?.id}`}
-                          className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate block dark:text-white dark:hover:text-blue-400"
-                        >
-                          {assignment.crew_member?.full_name || 'Unknown'}
-                        </Link>
-                        <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                          {assignment.project?.name || 'Unknown project'}
-                        </p>
+                return (
+                  <li key={assignment.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center min-w-0">
+                        <div
+                          className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
+                          style={{ backgroundColor: assignmentColor }}
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            href={`/crew/${assignment.crew_member?.id}`}
+                            className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate block dark:text-white dark:hover:text-blue-400"
+                          >
+                            {assignment.crew_member?.full_name || 'Unknown'}
+                          </Link>
+                          <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                            {isTraining && <span className="text-amber-600 dark:text-amber-400">[Training] </span>}
+                            {assignmentName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex-shrink-0 flex items-center">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-400">
+                          {daysUntilStart === 1
+                            ? 'Starts tomorrow'
+                            : `In ${daysUntilStart} days`}
+                        </span>
+                        <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">
+                          {format(new Date(assignment.start_date), 'MMM d')}
+                        </span>
                       </div>
                     </div>
-                    <div className="ml-4 flex-shrink-0 flex items-center">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          isUrgent
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400'
-                        }`}
-                      >
-                        {daysUntilEnd === 0
-                          ? 'Ends today'
-                          : daysUntilEnd === 1
-                          ? 'Ends tomorrow'
-                          : `${daysUntilEnd} days left`}
-                      </span>
-                      <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">
-                        {format(new Date(assignment.end_date), 'MMM d')}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
 
-        {typedEndingAssignments && typedEndingAssignments.length > 0 && (
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-            <Link
-              href="/planning"
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              View all assignments <ArrowRight className="inline h-4 w-4" />
-            </Link>
+          {typedUpcomingAssignments && typedUpcomingAssignments.length > 0 && (
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+              <Link
+                href="/planning"
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                View all assignments <ArrowRight className="inline h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Assignments Ending Soon */}
+        <div className="bg-white shadow rounded-lg overflow-hidden dark:bg-gray-900 dark:shadow-gray-900/30">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Assignments Ending Soon</h3>
+            </div>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Crew assignments ending within the next 7 days</p>
           </div>
-        )}
+
+          {!typedEndingAssignments || typedEndingAssignments.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No assignments ending in the next 7 days</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {typedEndingAssignments.map((assignment) => {
+                const daysUntilEnd = differenceInDays(new Date(assignment.end_date), new Date())
+                const isUrgent = daysUntilEnd <= 3
+
+                return (
+                  <li key={assignment.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center min-w-0">
+                        <div
+                          className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
+                          style={{ backgroundColor: assignment.project?.color || '#6B7280' }}
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            href={`/crew/${assignment.crew_member?.id}`}
+                            className="text-sm font-medium text-gray-900 hover:text-blue-600 truncate block dark:text-white dark:hover:text-blue-400"
+                          >
+                            {assignment.crew_member?.full_name || 'Unknown'}
+                          </Link>
+                          <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                            {assignment.project?.name || 'Unknown project'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex-shrink-0 flex items-center">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            isUrgent
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400'
+                          }`}
+                        >
+                          {daysUntilEnd === 0
+                            ? 'Ends today'
+                            : daysUntilEnd === 1
+                            ? 'Ends tomorrow'
+                            : `${daysUntilEnd} days left`}
+                        </span>
+                        <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">
+                          {format(new Date(assignment.end_date), 'MMM d')}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          {typedEndingAssignments && typedEndingAssignments.length > 0 && (
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+              <Link
+                href="/planning"
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                View all assignments <ArrowRight className="inline h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -15,8 +15,8 @@
 
 'use client'
 
-import { useCallback, useMemo } from 'react'
-import { Filter, X, AlertTriangle } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { Filter, X, AlertTriangle, ChevronDown } from 'lucide-react'
 import { format } from 'date-fns'
 import DateRangePicker from '@/components/ui/DateRangePicker'
 import { cn } from '@/lib/utils'
@@ -95,6 +95,8 @@ export default function PlanningFilters({
   onEndingSoonToggle,
   onClearAll,
 }: PlanningFiltersProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
   // Calculate active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0
@@ -114,10 +116,40 @@ export default function PlanningFilters({
     [projects]
   )
   
+  // Build filter summary text
+  const filterSummary = useMemo(() => {
+    const parts: string[] = []
+    if (selectedProjects.length > 0) {
+      const projectNames = selectedProjects
+        .map(id => activeProjects.find(p => p.id === id)?.name)
+        .filter(Boolean)
+      parts.push(projectNames.length === 1 ? projectNames[0]! : `${projectNames.length} vessels`)
+    }
+    if (selectedCrew.length > 0) {
+      const crewNames = selectedCrew
+        .map(id => crewMembers.find(c => c.id === id)?.full_name)
+        .filter(Boolean)
+      parts.push(crewNames.length === 1 ? crewNames[0]! : `${crewNames.length} crew`)
+    }
+    if (selectedRoles.length > 0) {
+      parts.push(selectedRoles.length === 1 ? selectedRoles[0] : `${selectedRoles.length} roles`)
+    }
+    if (dateFrom || dateTo) {
+      parts.push('Date range')
+    }
+    if (endingSoon) {
+      parts.push('Ending soon')
+    }
+    return parts.join(' · ')
+  }, [selectedProjects, selectedCrew, selectedRoles, dateFrom, dateTo, endingSoon, activeProjects, crewMembers])
+  
   return (
     <div className="bg-white rounded-lg border border-gray-200 mb-4 dark:bg-gray-900 dark:border-gray-700 print:hidden">
-      {/* Filter Header (always visible) */}
-      <div className="flex items-center justify-between px-4 py-3">
+      {/* Filter Header (always visible) - clickable to expand/collapse */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors rounded-lg"
+      >
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           <Filter className="h-4 w-4" />
           Filters
@@ -126,12 +158,20 @@ export default function PlanningFilters({
               {activeFilterCount}
             </span>
           )}
+          {hasFilters && !isExpanded && (
+            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 font-normal truncate max-w-[300px]">
+              {filterSummary}
+            </span>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
           {/* Quick filter: Ending Soon */}
           <button
-            onClick={onEndingSoonToggle}
+            onClick={(e) => {
+              e.stopPropagation()
+              onEndingSoonToggle()
+            }}
             className={cn(
               'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-all',
               endingSoon
@@ -146,17 +186,33 @@ export default function PlanningFilters({
           {/* Clear All */}
           {hasFilters && (
             <button
-              onClick={onClearAll}
+              onClick={(e) => {
+                e.stopPropagation()
+                onClearAll()
+              }}
               className="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               <X className="h-3.5 w-3.5" />
               Clear
             </button>
           )}
+          
+          {/* Expand/Collapse indicator */}
+          <ChevronDown 
+            className={cn(
+              "h-4 w-4 text-gray-400 transition-transform duration-200",
+              isExpanded && "rotate-180"
+            )} 
+          />
         </div>
-      </div>
+      </button>
       
-      <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4 dark:border-gray-700">
+      {/* Collapsible filter content */}
+      <div className={cn(
+        "overflow-hidden transition-all duration-200 ease-in-out",
+        isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4 dark:border-gray-700">
           {/* Vessel Filter */}
           <div>
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block dark:text-gray-400">
@@ -257,6 +313,7 @@ export default function PlanningFilters({
             showPresets
           />
         </div>
+      </div>
     </div>
   )
 }
