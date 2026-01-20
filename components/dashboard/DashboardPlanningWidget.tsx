@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { format, addDays, differenceInDays, startOfWeek, endOfWeek, isWithinInterval, isSameDay, parseISO, addWeeks, subWeeks } from 'date-fns'
 import { ChevronLeft, ChevronRight, ArrowRight, Calendar, Users, FolderOpen } from 'lucide-react'
@@ -42,7 +42,9 @@ interface DashboardPlanningWidgetProps {
 type ViewMode = 'by-project' | 'by-crew'
 
 const ROW_HEIGHT = 28
-const DAY_WIDTH = 36
+const SIDEBAR_WIDTH = 140
+const MIN_dayWidth = 32
+const DEFAULT_dayWidth = 36
 
 export default function DashboardPlanningWidget({
   assignments,
@@ -51,7 +53,21 @@ export default function DashboardPlanningWidget({
 }: DashboardPlanningWidgetProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('by-project')
   const [weekOffset, setWeekOffset] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(0)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  // Measure container width on mount and resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (scrollContainerRef.current) {
+        setContainerWidth(scrollContainerRef.current.offsetWidth)
+      }
+    }
+    
+    updateWidth()
+    window.addEventListener('resize', updateWidth)
+    return () => window.removeEventListener('resize', updateWidth)
+  }, [])
 
   // Calculate the time range (3 weeks centered on current week + offset)
   const timeRange = useMemo(() => {
@@ -72,6 +88,14 @@ export default function DashboardPlanningWidget({
     }
     return result
   }, [timeRange])
+
+  // Calculate dynamic day width to fill container
+  const dayWidth = useMemo(() => {
+    if (containerWidth === 0 || days.length === 0) return DEFAULT_dayWidth
+    const availableWidth = containerWidth - SIDEBAR_WIDTH
+    const calculatedWidth = Math.floor(availableWidth / days.length)
+    return Math.max(MIN_dayWidth, calculatedWidth)
+  }, [containerWidth, days.length])
 
   // Group assignments by project or crew
   const rows = useMemo(() => {
@@ -119,8 +143,8 @@ export default function DashboardPlanningWidget({
     if (visibleDuration <= 0) return null
     
     return {
-      left: visibleStart * DAY_WIDTH,
-      width: visibleDuration * DAY_WIDTH - 2,
+      left: visibleStart * dayWidth,
+      width: visibleDuration * dayWidth - 2,
     }
   }
 
@@ -245,13 +269,13 @@ export default function DashboardPlanningWidget({
 
       {/* Gantt Chart */}
       <div className="overflow-x-auto" ref={scrollContainerRef}>
-        <div style={{ minWidth: 140 + days.length * DAY_WIDTH }}>
+        <div style={{ minWidth: SIDEBAR_WIDTH + days.length * dayWidth }}>
           {/* Timeline Header - Month Row */}
           <div className="flex border-b border-slate-200/60 dark:border-gray-700 bg-slate-100/80 dark:bg-gray-800/80">
             {/* Sidebar header spacer */}
             <div 
               className="flex-shrink-0 border-r border-slate-200/60 dark:border-gray-700"
-              style={{ width: 140 }}
+              style={{ width: SIDEBAR_WIDTH }}
             />
             {/* Months */}
             <div className="flex">
@@ -259,7 +283,7 @@ export default function DashboardPlanningWidget({
                 <div
                   key={`${group.month}-${group.year}-${idx}`}
                   className="flex-shrink-0 text-center py-1.5 text-xs font-semibold text-slate-700 dark:text-gray-300 border-r border-slate-200/60 dark:border-gray-700"
-                  style={{ width: group.days * DAY_WIDTH }}
+                  style={{ width: group.days * dayWidth }}
                 >
                   {group.month} {group.year}
                 </div>
@@ -272,7 +296,7 @@ export default function DashboardPlanningWidget({
             {/* Sidebar header */}
             <div 
               className="flex-shrink-0 px-3 py-2 text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider border-r border-slate-200/60 dark:border-gray-700"
-              style={{ width: 140 }}
+              style={{ width: SIDEBAR_WIDTH }}
             >
               {viewMode === 'by-project' ? 'Vessel' : 'Crew'}
             </div>
@@ -291,7 +315,7 @@ export default function DashboardPlanningWidget({
                           ? 'bg-slate-100/50 dark:bg-gray-800/50' 
                           : ''
                     }`}
-                    style={{ width: DAY_WIDTH }}
+                    style={{ width: dayWidth }}
                   >
                     <div className={`font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-gray-400'}`}>
                       {format(day, 'EEE')}
@@ -325,7 +349,7 @@ export default function DashboardPlanningWidget({
                 {/* Row label */}
                 <div 
                   className="flex-shrink-0 px-3 flex items-center border-r border-slate-200/60 dark:border-gray-700"
-                  style={{ width: 140 }}
+                  style={{ width: SIDEBAR_WIDTH }}
                 >
                   <div
                     className="w-2 h-2 rounded-full mr-2 flex-shrink-0"
@@ -353,7 +377,7 @@ export default function DashboardPlanningWidget({
                                 ? 'bg-slate-100/30 dark:bg-gray-800/30' 
                                 : ''
                           }`}
-                          style={{ width: DAY_WIDTH }}
+                          style={{ width: dayWidth }}
                         />
                       )
                     })}
@@ -398,7 +422,7 @@ export default function DashboardPlanningWidget({
                   {todayIndex >= 0 && (
                     <div
                       className="absolute top-0 bottom-0 w-0.5 bg-blue-500 dark:bg-blue-400 z-10"
-                      style={{ left: todayIndex * DAY_WIDTH + DAY_WIDTH / 2 }}
+                      style={{ left: todayIndex * dayWidth + dayWidth / 2 }}
                     />
                   )}
                 </div>
