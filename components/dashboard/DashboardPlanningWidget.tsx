@@ -7,12 +7,14 @@ import { ChevronLeft, ChevronRight, ArrowRight, Calendar, Users, FolderOpen } fr
 
 interface Assignment {
   id: string
-  project_id: string
+  project_id: string | null
   crew_member_id: string
   start_date: string
   end_date: string
   role_on_project: string | null
-  project: { id: string; name: string; color: string }
+  assignment_type?: 'vessel' | 'training' | null
+  training_description?: string | null
+  project: { id: string; name: string; color: string } | null
   crew_member: { id: string; full_name: string; role: string }
 }
 
@@ -136,6 +138,38 @@ export default function DashboardPlanningWidget({
   const today = new Date()
   const todayIndex = days.findIndex(d => isSameDay(d, today))
 
+  // Group days by month for month headers
+  const monthGroups = useMemo(() => {
+    const groups: { month: string; year: number; days: number; startIndex: number }[] = []
+    let currentMonth = ''
+    let currentYear = 0
+    let currentCount = 0
+    let startIndex = 0
+
+    days.forEach((day, idx) => {
+      const month = format(day, 'MMMM')
+      const year = day.getFullYear()
+      
+      if (month !== currentMonth || year !== currentYear) {
+        if (currentMonth) {
+          groups.push({ month: currentMonth, year: currentYear, days: currentCount, startIndex })
+        }
+        currentMonth = month
+        currentYear = year
+        currentCount = 1
+        startIndex = idx
+      } else {
+        currentCount++
+      }
+    })
+    
+    if (currentMonth) {
+      groups.push({ month: currentMonth, year: currentYear, days: currentCount, startIndex })
+    }
+    
+    return groups
+  }, [days])
+
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden dark:bg-gray-900 dark:shadow-gray-900/30 border border-slate-200/60 dark:border-gray-700">
       {/* Header */}
@@ -212,7 +246,28 @@ export default function DashboardPlanningWidget({
       {/* Gantt Chart */}
       <div className="overflow-x-auto" ref={scrollContainerRef}>
         <div style={{ minWidth: 140 + days.length * DAY_WIDTH }}>
-          {/* Timeline Header */}
+          {/* Timeline Header - Month Row */}
+          <div className="flex border-b border-slate-200/60 dark:border-gray-700 bg-slate-100/80 dark:bg-gray-800/80">
+            {/* Sidebar header spacer */}
+            <div 
+              className="flex-shrink-0 border-r border-slate-200/60 dark:border-gray-700"
+              style={{ width: 140 }}
+            />
+            {/* Months */}
+            <div className="flex">
+              {monthGroups.map((group, idx) => (
+                <div
+                  key={`${group.month}-${group.year}-${idx}`}
+                  className="flex-shrink-0 text-center py-1.5 text-xs font-semibold text-slate-700 dark:text-gray-300 border-r border-slate-200/60 dark:border-gray-700"
+                  style={{ width: group.days * DAY_WIDTH }}
+                >
+                  {group.month} {group.year}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Timeline Header - Days Row */}
           <div className="flex border-b border-slate-200/60 dark:border-gray-700 bg-slate-50/50 dark:bg-gray-800/50">
             {/* Sidebar header */}
             <div 
@@ -309,9 +364,14 @@ export default function DashboardPlanningWidget({
                     const style = getBarStyle(assignment)
                     if (!style) return null
 
-                    const barColor = viewMode === 'by-project' 
-                      ? assignment.project.color 
-                      : assignment.project.color
+                    const isTraining = assignment.assignment_type === 'training'
+                    const barColor = isTraining 
+                      ? '#F59E0B' // Amber for training
+                      : (assignment.project?.color || '#6B7280')
+                    
+                    const assignmentLabel = isTraining
+                      ? (assignment.training_description || 'Training')
+                      : (assignment.project?.name || 'Unknown')
 
                     return (
                       <div
@@ -323,12 +383,12 @@ export default function DashboardPlanningWidget({
                           height: ROW_HEIGHT - 8,
                           backgroundColor: barColor,
                         }}
-                        title={`${assignment.crew_member.full_name} - ${assignment.project.name}\n${format(parseISO(assignment.start_date), 'MMM d')} - ${format(parseISO(assignment.end_date), 'MMM d')}`}
+                        title={`${assignment.crew_member.full_name} - ${assignmentLabel}\n${format(parseISO(assignment.start_date), 'MMM d')} - ${format(parseISO(assignment.end_date), 'MMM d')}`}
                       >
                         <div className="px-1.5 text-[10px] font-medium text-white truncate leading-[20px]">
                           {viewMode === 'by-project' 
                             ? assignment.crew_member.full_name 
-                            : assignment.project.name}
+                            : assignmentLabel}
                         </div>
                       </div>
                     )
