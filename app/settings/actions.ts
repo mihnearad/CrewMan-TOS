@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { logCreate, logUpdate, logDelete } from '@/lib/audit'
+import { getCurrentUserContext } from '@/lib/auth-helpers'
 
 /**
  * Get all crew roles ordered by display_order
@@ -44,12 +46,16 @@ export async function createCrewRole(formData: FormData) {
   
   const nextOrder = roles && roles.length > 0 ? roles[0].display_order + 1 : 0
   
-  const { error } = await supabase
+  const newRole = {
+    name: name.trim(),
+    display_order: nextOrder
+  }
+
+  const { data: created, error } = await supabase
     .from('crew_roles')
-    .insert({
-      name: name.trim(),
-      display_order: nextOrder
-    })
+    .insert(newRole)
+    .select()
+    .single()
   
   if (error) {
     console.error('Error creating crew role:', error)
@@ -57,6 +63,12 @@ export async function createCrewRole(formData: FormData) {
       redirect('/settings?error=A role with this name already exists')
     }
     redirect('/settings?error=Failed to create role')
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && created) {
+    await logCreate('crew_roles', created.id, created, userContext.userEmail, userContext.userId)
   }
   
   revalidatePath('/settings')
@@ -75,6 +87,13 @@ export async function updateCrewRole(id: string, formData: FormData) {
   if (!name || name.trim().length === 0) {
     redirect('/settings?error=Role name is required')
   }
+
+  // Fetch old values for audit log
+  const { data: oldValues } = await supabase
+    .from('crew_roles')
+    .select('*')
+    .eq('id', id)
+    .single()
   
   const { error } = await supabase
     .from('crew_roles')
@@ -87,6 +106,12 @@ export async function updateCrewRole(id: string, formData: FormData) {
       redirect('/settings?error=A role with this name already exists')
     }
     redirect('/settings?error=Failed to update role')
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && oldValues) {
+    await logUpdate('crew_roles', id, oldValues, { ...oldValues, name: name.trim() }, userContext.userEmail, userContext.userId)
   }
   
   revalidatePath('/settings')
@@ -110,6 +135,13 @@ export async function deleteCrewRole(id: string) {
   if (crewMembers && crewMembers.length > 0) {
     return { error: 'Cannot delete role that is assigned to crew members' }
   }
+
+  // Fetch old values for audit log
+  const { data: oldValues } = await supabase
+    .from('crew_roles')
+    .select('*')
+    .eq('id', id)
+    .single()
   
   const { error } = await supabase
     .from('crew_roles')
@@ -119,6 +151,12 @@ export async function deleteCrewRole(id: string) {
   if (error) {
     console.error('Error deleting crew role:', error)
     return { error: 'Failed to delete role' }
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && oldValues) {
+    await logDelete('crew_roles', id, oldValues, userContext.userEmail, userContext.userId)
   }
   
   revalidatePath('/settings')

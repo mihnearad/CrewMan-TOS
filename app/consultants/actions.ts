@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { logCreate, logUpdate, logDelete } from '@/lib/audit'
+import { getCurrentUserContext } from '@/lib/auth-helpers'
 
 export async function createConsultant(formData: FormData) {
   const supabase = await createClient()
@@ -13,17 +15,29 @@ export async function createConsultant(formData: FormData) {
   const role = formData.get('role') as string
   const notes = formData.get('notes') as string
 
-  const { error } = await supabase.from('consultants').insert({
+  const newConsultant = {
     full_name,
     email: email || null,
     phone: phone || null,
     role: role || null,
     notes: notes || null,
-  })
+  }
+
+  const { data: created, error } = await supabase
+    .from('consultants')
+    .insert(newConsultant)
+    .select()
+    .single()
 
   if (error) {
     console.error('Error creating consultant:', error)
     redirect('/consultants/new?error=Failed to create consultant')
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && created) {
+    await logCreate('consultants', created.id, created, userContext.userEmail, userContext.userId)
   }
 
   revalidatePath('/consultants')
@@ -40,21 +54,36 @@ export async function updateConsultant(id: string, formData: FormData) {
   const notes = formData.get('notes') as string
   const status = formData.get('status') as string
 
+  // Fetch old values for audit log
+  const { data: oldValues } = await supabase
+    .from('consultants')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  const updatedValues = {
+    full_name,
+    email: email || null,
+    phone: phone || null,
+    role: role || null,
+    notes: notes || null,
+    status,
+  }
+
   const { error } = await supabase
     .from('consultants')
-    .update({
-      full_name,
-      email: email || null,
-      phone: phone || null,
-      role: role || null,
-      notes: notes || null,
-      status,
-    })
+    .update(updatedValues)
     .eq('id', id)
 
   if (error) {
     console.error('Error updating consultant:', error)
     redirect(`/consultants/${id}/edit?error=Failed to update consultant`)
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && oldValues) {
+    await logUpdate('consultants', id, oldValues, { ...oldValues, ...updatedValues }, userContext.userEmail, userContext.userId)
   }
 
   revalidatePath('/consultants')
@@ -65,6 +94,13 @@ export async function updateConsultant(id: string, formData: FormData) {
 export async function deleteConsultant(id: string) {
   const supabase = await createClient()
 
+  // Fetch old values for audit log
+  const { data: oldValues } = await supabase
+    .from('consultants')
+    .select('*')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase
     .from('consultants')
     .delete()
@@ -73,6 +109,12 @@ export async function deleteConsultant(id: string) {
   if (error) {
     console.error('Error deleting consultant:', error)
     return { error: 'Failed to delete consultant' }
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && oldValues) {
+    await logDelete('consultants', id, oldValues, userContext.userEmail, userContext.userId)
   }
 
   revalidatePath('/consultants')

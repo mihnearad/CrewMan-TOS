@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { updateAssignmentDatesSchema } from '@/lib/validations'
+import { logCreate, logUpdate, logDelete } from '@/lib/audit'
+import { getCurrentUserContext } from '@/lib/auth-helpers'
 
 // Quick conflict check for drag operations (returns minimal data)
 export async function quickConflictCheck(
@@ -136,11 +138,21 @@ export async function assignCrew(
     insertData.training_description = null
   }
 
-  const { error } = await supabase.from('assignments').insert(insertData)
+  const { data: created, error } = await supabase
+    .from('assignments')
+    .insert(insertData)
+    .select()
+    .single()
 
   if (error) {
     console.error('Error assigning crew:', error)
     return { error: 'Failed to assign crew' }
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && created) {
+    await logCreate('assignments', created.id, created, userContext.userEmail, userContext.userId)
   }
 
   // Only update crew status to 'on_project' if assignment starts today or earlier
@@ -178,10 +190,10 @@ export async function updateAssignment(
     }
   }
 
-  // Get current assignment to check crew member and project
+  // Get current assignment to check crew member and project (fetch full record for audit)
   const { data: currentAssignment } = await supabase
     .from('assignments')
-    .select('crew_member_id, project_id, start_date, end_date')
+    .select('*')
     .eq('id', assignmentId)
     .single()
 
@@ -226,6 +238,12 @@ export async function updateAssignment(
     return { error: 'Failed to update assignment' }
   }
 
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext) {
+    await logUpdate('assignments', assignmentId, currentAssignment, { ...currentAssignment, ...updateData }, userContext.userEmail, userContext.userId)
+  }
+
   revalidatePath('/planning')
   revalidatePath('/projects')
   if (currentAssignment.project_id) {
@@ -238,10 +256,10 @@ export async function updateAssignment(
 export async function removeAssignment(assignmentId: string) {
   const supabase = await createClient()
 
-  // Get crew member ID and project ID before deleting
+  // Get full assignment data before deleting
   const { data: assignment } = await supabase
     .from('assignments')
-    .select('crew_member_id, project_id')
+    .select('*')
     .eq('id', assignmentId)
     .single()
 
@@ -258,6 +276,12 @@ export async function removeAssignment(assignmentId: string) {
   if (error) {
     console.error('Error removing assignment:', error)
     return { error: 'Failed to remove assignment' }
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext) {
+    await logDelete('assignments', assignmentId, assignment, userContext.userEmail, userContext.userId)
   }
 
   // Check if crew has other currently active assignments (started and not ended)
