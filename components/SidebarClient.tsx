@@ -12,23 +12,39 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Anchor, Users, Calendar, Building2, UserCog, Settings } from 'lucide-react'
+import { LayoutDashboard, Anchor, Users, Calendar, Building2, UserCog, Settings, ClipboardList } from 'lucide-react'
 import SearchTrigger from './search/SearchTrigger'
 import { cn } from '@/lib/utils'
 
-const navigation = [
+const baseNavigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Vessels', href: '/projects', icon: Anchor },
   { name: 'Crew', href: '/crew', icon: Users },
   { name: 'Clients', href: '/clients', icon: Building2 },
   { name: 'Consultants', href: '/consultants', icon: UserCog },
   { name: 'Planning', href: '/planning', icon: Calendar },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
-export default function SidebarClient() {
+const adminOnlyItems = [
+  { name: 'Audit Log', href: '/audit', icon: ClipboardList },
+]
+
+const settingsItem = { name: 'Settings', href: '/settings', icon: Settings }
+
+type SidebarClientProps = {
+  userRole: 'admin' | 'planner' | 'viewer'
+}
+
+export default function SidebarClient({ userRole }: SidebarClientProps) {
   const pathname = usePathname()
   const [shortcutKey, setShortcutKey] = useState('⌘')
+
+  // Build navigation based on user role
+  const navigation = [
+    ...baseNavigation,
+    ...(userRole === 'admin' ? adminOnlyItems : []),
+    settingsItem,
+  ]
   
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0

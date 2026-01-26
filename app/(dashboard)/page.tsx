@@ -3,6 +3,11 @@ import Link from 'next/link'
 import { Anchor, Users, Calendar, ArrowRight, Plus, UserPlus, ClipboardList, AlertTriangle, Building2, UserCog, Clock } from 'lucide-react'
 import { format, addDays, differenceInDays } from 'date-fns'
 import DashboardPlanningWidget from '@/components/dashboard/DashboardPlanningWidget'
+import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget'
+import { getAuditLogs } from '@/lib/audit'
+import { isAdmin } from '@/lib/auth-helpers'
+
+export const dynamic = 'force-dynamic'
 
 interface EndingAssignment {
   id: string
@@ -50,6 +55,9 @@ interface CrewMember {
 export default async function DashboardPage() {
   const supabase = await createClient()
 
+  // Check if user is admin for audit log visibility
+  const userIsAdmin = await isAdmin()
+
   // Get counts for quick stats - parallelized for better performance
   const [
     { count: projectCount },
@@ -64,6 +72,9 @@ export default async function DashboardPage() {
     supabase.from('clients').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('consultants').select('*', { count: 'exact', head: true }).eq('status', 'active')
   ])
+
+  // Get recent audit logs if user is admin
+  const recentActivity = userIsAdmin ? await getAuditLogs({ limit: 10 }) : null
 
   // Get assignments ending within 7 days
   const today = new Date().toISOString().split('T')[0]
@@ -307,6 +318,11 @@ export default async function DashboardPage() {
           crewMembers={typedCrewMembers || []}
         />
       </div>
+
+      {/* Recent Activity for Admins */}
+      {userIsAdmin && recentActivity && recentActivity.data.length > 0 && (
+        <RecentActivityWidget logs={recentActivity.data} />
+      )}
 
       {/* Assignment Alerts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

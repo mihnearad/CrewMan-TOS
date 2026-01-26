@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { logCreate, logUpdate, logDelete } from '@/lib/audit'
+import { getCurrentUserContext } from '@/lib/auth-helpers'
 
 export async function createClientAction(formData: FormData) {
   const supabase = await createClient()
@@ -14,18 +16,30 @@ export async function createClientAction(formData: FormData) {
   const address = formData.get('address') as string
   const notes = formData.get('notes') as string
 
-  const { error } = await supabase.from('clients').insert({
+  const newClient = {
     name,
     contact_name: contact_name || null,
     contact_email: contact_email || null,
     contact_phone: contact_phone || null,
     address: address || null,
     notes: notes || null,
-  })
+  }
+
+  const { data: created, error } = await supabase
+    .from('clients')
+    .insert(newClient)
+    .select()
+    .single()
 
   if (error) {
     console.error('Error creating client:', error)
     redirect('/clients/new?error=Failed to create client')
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && created) {
+    await logCreate('clients', created.id, created, userContext.userEmail, userContext.userId)
   }
 
   revalidatePath('/clients')
@@ -43,22 +57,37 @@ export async function updateClient(id: string, formData: FormData) {
   const notes = formData.get('notes') as string
   const status = formData.get('status') as string
 
+  // Fetch old values for audit log
+  const { data: oldValues } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  const updatedValues = {
+    name,
+    contact_name: contact_name || null,
+    contact_email: contact_email || null,
+    contact_phone: contact_phone || null,
+    address: address || null,
+    notes: notes || null,
+    status,
+  }
+
   const { error } = await supabase
     .from('clients')
-    .update({
-      name,
-      contact_name: contact_name || null,
-      contact_email: contact_email || null,
-      contact_phone: contact_phone || null,
-      address: address || null,
-      notes: notes || null,
-      status,
-    })
+    .update(updatedValues)
     .eq('id', id)
 
   if (error) {
     console.error('Error updating client:', error)
     redirect(`/clients/${id}/edit?error=Failed to update client`)
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && oldValues) {
+    await logUpdate('clients', id, oldValues, { ...oldValues, ...updatedValues }, userContext.userEmail, userContext.userId)
   }
 
   revalidatePath('/clients')
@@ -69,6 +98,13 @@ export async function updateClient(id: string, formData: FormData) {
 export async function deleteClient(id: string) {
   const supabase = await createClient()
 
+  // Fetch old values for audit log
+  const { data: oldValues } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase
     .from('clients')
     .delete()
@@ -77,6 +113,12 @@ export async function deleteClient(id: string) {
   if (error) {
     console.error('Error deleting client:', error)
     return { error: 'Failed to delete client' }
+  }
+
+  // Log audit trail
+  const userContext = await getCurrentUserContext()
+  if (userContext && oldValues) {
+    await logDelete('clients', id, oldValues, userContext.userEmail, userContext.userId)
   }
 
   revalidatePath('/clients')
