@@ -22,11 +22,20 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  // Get user role for sidebar
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const userRole = profile?.role || 'viewer'
+
   return (
     <ClientProviders>
       <ToastProvider>
         <div className="flex h-screen bg-gray-100 dark:bg-gray-950 print:block print:h-auto print:bg-white">
-          <SidebarClient />
+          <SidebarClient userRole={userRole} />
           <div className="flex flex-1 flex-col overflow-hidden print:block print:overflow-visible">
             <Header signoutAction={signout} />
             <main className="flex-1 overflow-y-auto p-3 bg-gray-100 dark:bg-gray-950 print:block print:overflow-visible print:bg-white print:p-0">
