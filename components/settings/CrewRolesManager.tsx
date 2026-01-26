@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Pencil, Trash2, X, GripVertical } from 'lucide-react'
 import { createCrewRole, updateCrewRole, deleteCrewRole } from '@/app/settings/actions'
+import { useToast } from '@/components/ui/ToastProvider'
 
 interface CrewRole {
   id: string
@@ -16,6 +18,8 @@ interface CrewRolesManagerProps {
 }
 
 export default function CrewRolesManager({ roles: initialRoles }: CrewRolesManagerProps) {
+  const router = useRouter()
+  const { showToast } = useToast()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingRole, setEditingRole] = useState<CrewRole | null>(null)
   const [newRoleName, setNewRoleName] = useState('')
@@ -30,9 +34,10 @@ export default function CrewRolesManager({ roles: initialRoles }: CrewRolesManag
     startTransition(async () => {
       const result = await deleteCrewRole(role.id)
       if (result.error) {
-        alert(result.error)
+        showToast(result.error, 'error')
       } else {
-        window.location.reload()
+        showToast('Role deleted successfully', 'success')
+        router.refresh()
       }
     })
   }

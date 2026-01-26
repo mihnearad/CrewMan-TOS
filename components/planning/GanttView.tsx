@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { DndContext, DragEndEvent, DragMoveEvent, DragStartEvent, pointerWithin } from '@dnd-kit/core'
 import { format, addDays, differenceInDays } from 'date-fns'
 import type {
@@ -28,6 +29,7 @@ import GanttSidebar from './GanttSidebar'
 import GanttRow from './GanttRow'
 import CrewDetailModal from './CrewDetailModal'
 import EditAssignmentModal from '@/components/assignments/EditAssignmentModal'
+import { useToast } from '@/components/ui/ToastProvider'
 
 interface GanttClient {
   id: string
@@ -60,6 +62,8 @@ export default function GanttView({
   roles = [],
   filterProjectId,
 }: GanttViewProps) {
+  const router = useRouter()
+  const { showToast } = useToast()
   const [viewMode, setViewMode] = useState<GanttViewMode>('by-project')
   const [zoomLevel, setZoomLevel] = useState<GanttZoomLevel>('week')
   const [timeRange, setTimeRange] = useState<GanttTimeRange>(getDefaultTimeRange)
@@ -191,13 +195,14 @@ export default function GanttView({
       })
 
       if (result.error) {
-        alert(result.error)
+        showToast(result.error, 'error')
       } else {
-        window.location.reload()
+        showToast('Assignment updated successfully', 'success')
+        router.refresh()
       }
     } catch (error) {
       console.error('Failed to update assignment:', error)
-      alert('Failed to update assignment')
+      showToast('Failed to update assignment', 'error')
     } finally {
       setIsUpdating(false)
       setDraggedItem(null)

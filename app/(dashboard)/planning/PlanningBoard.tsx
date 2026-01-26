@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { assignCrew, removeAssignment, updateAssignment } from '@/app/planning/actions'
 import { Plus, X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, BarChart3, Printer } from 'lucide-react'
@@ -24,6 +25,7 @@ import { useMultiFilter, useDateRangeFilter, useSingleFilter } from '@/lib/hooks
 import PlanningFilters from '@/components/planning/PlanningFilters'
 import PrintHeader from '@/components/planning/PrintHeader'
 import { exportPdf } from '@/lib/utils/exportPdf'
+import { useToast } from '@/components/ui/ToastProvider'
 
 // Lazy load heavy GanttView component
 const GanttView = dynamic(() => import('@/components/planning/GanttView'), {
@@ -90,6 +92,8 @@ export default function PlanningBoard({
   roles = [],
   clients = []
 }: PlanningBoardProps) {
+  const router = useRouter()
+  const { showToast } = useToast()
   const [view, setView] = useState<'calendar' | 'timeline' | 'gantt'>('gantt')
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [assignmentType, setAssignmentType] = useState<'vessel' | 'training'>('vessel')
@@ -303,7 +307,8 @@ export default function PlanningBoard({
       setAssignmentType('vessel')
       setTrainingDescription('')
       setLoading(false)
-      window.location.reload() // Simple refresh for MVP
+      showToast('Assignment created successfully', 'success')
+      router.refresh()
     }
   }
 
@@ -314,9 +319,10 @@ export default function PlanningBoard({
     const result = await removeAssignment(assignmentId)
 
     if (result.error) {
-      alert(result.error)
+      showToast(result.error, 'error')
     } else {
-      window.location.reload()
+      showToast('Assignment removed successfully', 'success')
+      router.refresh()
     }
     setLoading(false)
   }

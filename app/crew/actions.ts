@@ -3,22 +3,25 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { crewMemberSchema, updateCrewMemberSchema, validateFormData } from '@/lib/validations'
 
 export async function createCrewMember(formData: FormData) {
   const supabase = await createClient()
 
-  const full_name = formData.get('full_name') as string
-  const role = formData.get('role') as string
-  const email = formData.get('email') as string
-  const phone = formData.get('phone') as string
-  const nationality = formData.get('nationality') as string
-  const home_airport = formData.get('home_airport') as string
+  // Validate input
+  const validation = validateFormData(crewMemberSchema, formData)
+  if (!validation.success) {
+    const firstError = Object.values(validation.errors)[0]
+    redirect(`/crew/new?error=${encodeURIComponent(firstError)}`)
+  }
+
+  const { full_name, role, email, phone, nationality, home_airport } = validation.data
 
   // Check for duplicate name (case-insensitive)
   const { data: existing } = await supabase
     .from('crew_members')
     .select('id')
-    .ilike('full_name', full_name.trim())
+    .ilike('full_name', full_name)
     .maybeSingle()
 
   if (existing) {
@@ -26,7 +29,7 @@ export async function createCrewMember(formData: FormData) {
   }
 
   const { error } = await supabase.from('crew_members').insert({
-    full_name: full_name.trim(),
+    full_name,
     role,
     email: email || null,
     phone: phone || null,
@@ -50,18 +53,19 @@ export async function createCrewMember(formData: FormData) {
 export async function updateCrewMember(id: string, formData: FormData) {
   const supabase = await createClient()
 
-  const full_name = formData.get('full_name') as string
-  const role = formData.get('role') as string
-  const email = formData.get('email') as string
-  const phone = formData.get('phone') as string
-  const status = formData.get('status') as string
-  const nationality = formData.get('nationality') as string
-  const home_airport = formData.get('home_airport') as string
+  // Validate input
+  const validation = validateFormData(updateCrewMemberSchema, formData)
+  if (!validation.success) {
+    const firstError = Object.values(validation.errors)[0]
+    redirect(`/crew/${id}/edit?error=${encodeURIComponent(firstError)}`)
+  }
+
+  const { full_name, role, email, phone, status, nationality, home_airport } = validation.data
 
   const { error } = await supabase
     .from('crew_members')
     .update({
-      full_name: full_name.trim(),
+      full_name,
       role,
       email: email || null,
       phone: phone || null,
