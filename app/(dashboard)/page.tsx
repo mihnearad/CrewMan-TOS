@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Anchor, Users, Calendar, ArrowRight, Plus, UserPlus, ClipboardList, AlertTriangle, Building2, UserCog, Clock } from 'lucide-react'
-import { format, addDays, differenceInDays } from 'date-fns'
+import { format, addDays, differenceInDays, startOfWeek, addWeeks, subWeeks } from 'date-fns'
 import DashboardPlanningWidget from '@/components/dashboard/DashboardPlanningWidget'
 import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget'
 import { getAuditLogs } from '@/lib/audit'
@@ -33,7 +33,9 @@ interface PlanningAssignment {
   start_date: string
   end_date: string
   role_on_project: string | null
-  project: { id: string; name: string; color: string }
+  assignment_type?: 'vessel' | 'training' | null
+  training_description?: string | null
+  project: { id: string; name: string; color: string } | null
   crew_member: { id: string; full_name: string; role: string }
 }
 
@@ -80,6 +82,11 @@ export default async function DashboardPage() {
   const today = new Date().toISOString().split('T')[0]
   const sevenDaysFromNow = addDays(new Date(), 7).toISOString().split('T')[0]
 
+  // Calculate visible range for planning widget (3 weeks centered on current week)
+  // This matches the DashboardPlanningWidget's default view
+  const planningStart = subWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1).toISOString().split('T')[0]
+  const planningEnd = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 2).toISOString().split('T')[0]
+
   // Fetch data for planning widget, ending and upcoming assignments in parallel
   const [
     { data: endingAssignments },
@@ -124,17 +131,22 @@ export default async function DashboardPage() {
         start_date,
         end_date,
         role_on_project,
+        assignment_type,
+        training_description,
         project:projects(id, name, color),
         crew_member:crew_members(id, full_name, role)
       `)
+      .or(`and(start_date.lte.${planningEnd},end_date.gte.${planningStart})`)
       .order('start_date', { ascending: true }),
     supabase
       .from('projects')
       .select('id, name, type, status, color')
+      .eq('status', 'active')
       .order('name'),
     supabase
       .from('crew_members')
       .select('id, full_name, role, status')
+      .eq('status', 'active')
       .order('full_name')
   ])
 
