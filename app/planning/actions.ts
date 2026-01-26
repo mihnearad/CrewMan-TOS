@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { updateAssignmentDatesSchema } from '@/lib/validations'
 
 // Quick conflict check for drag operations (returns minimal data)
 export async function quickConflictCheck(
@@ -167,6 +168,15 @@ export async function updateAssignment(
   }
 ) {
   const supabase = await createClient()
+
+  // Validate dates if both are provided
+  if (data.startDate && data.endDate) {
+    const validation = updateAssignmentDatesSchema.safeParse(data)
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]
+      return { error: firstError.message }
+    }
+  }
 
   // Get current assignment to check crew member and project
   const { data: currentAssignment } = await supabase
